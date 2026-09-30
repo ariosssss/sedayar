@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">صدایار</string>
+
+    <!-- Main screen -->
+    <string name="new_note">یادداشت جدید</string>
+    <string name="search_hint">جستجو در یادداشت‌ها…</string>
+    <string name="empty_title">هنوز یادداشتی نداری!</string>
+    <string name="empty_subtitle">با دکمه + اولین یادداشت صوتی‌ات را بساز</string>
+    <string name="untitled">بی‌عنوان</string>
+
+    <!-- Editor -->
+    <string name="edit_note">ویرایش یادداشت</string>
+    <string name="hint_title">عنوان…</string>
+    <string name="hint_content">اینجا بنویس یا میکروفون را بزن و حرف بزن…</string>
+    <string name="say_something">بگو…</string>
+    <string name="listening">در حال شنیدن…</string>
+    <string name="mode_text">متن</string>
+    <string name="mode_draw">نقاشی</string>
+    <string name="save">ذخیره</string>
+    <string name="saved">ذخیره شد</string>
+    <string name="lang_changed">زبان تشخیص گفتار</string>
+    <string name="lang_fa">فا</string>
+    <string name="lang_en">EN</string>
+
+    <!-- Speech errors -->
+    <string name="speech_unavailable">تشخیص گفتار روی این گوشی در دسترس نیست</string>
+    <string name="speech_error_network">برای تشخیص گفتار به اینترنت نیاز است</string>
+    <string name="speech_error_no_match">چیزی شنیده نشد؛ دوباره تلاش کن</string>
+    <string name="speech_error_busy">موتور گفتار مشغول است؛ لحظه‌ای بعد تلاش کن</string>
+    <string name="speech_error_generic">خطا در تشخیص گفتار</string>
+    <string name="mic_rationale">برای تبدیل گفتار به متن، اجازه دسترسی به میکروفون لازم است</string>
+
+    <!-- Common -->
+    <string name="delete">حذف</string>
+    <string name="delete_confirm_title">این یادداشت حذف شود؟</string>
+    <string name="delete_confirm_msg">این یادداشت برای همیشه حذف می‌شود و برگشتی در کار نیست.</string>
+    <string name="cancel">لغو</string>
+    <string name="ok">باشه</string>
+    <string name="pin">پین کردن</string>
+    <string name="unpin">برداشتن پین</string>
+    <string name="share">اشتراک‌گذاری</string>
+    <string name="share_via">اشتراک‌گذاری با</string>
+    <string name="share_text_empty">یادداشت خالی است!</string>
+    <string name="color">رنگ یادداشت</string>
+    <string name="color_saved">رنگ یادداشت عوض شد</string>
+    <string name="note_deleted">یادداشت حذف شد</string>
+    <string name="offline_mode">تشخیص گفتار آفلاین</string>
+    <string name="offline_on_toast">حالت آفلاین روشن شد (نیاز به پک آفلاین گوگل دارد)</string>
+    <string name="offline_off_toast">حالت آفلاین خاموش شد</string>
+
+    <!-- Drawing -->
+    <string name="eraser">پاک‌کن</string>
+    <string name="undo">واگرد</string>
+    <string name="redo">بازانجام</string>
+    <string name="clear_canvas">پاک کردن بوم</string>
+
+    <!-- Accessibility -->
+    <string name="cd_pen_color">رنگ قلم</string>
+    <string name="cd_pen_width">ضخامت قلم</string>
+    <string name="cd_mic">میکروفون</string>
+    <string name="cd_language">زبان گفتار</string>
+    <string name="cd_pin">پین‌شده</string>
+    <string name="cd_thumbnail">پیش‌نمایش نقاشی</string>
+
+    <!-- Premium -->
+    <string name="premium">صدایار پلاس</string>
+    <string name="plus_title">صدایار پلاس</string>
+    <string name="plus_subtitle">همه توانایی‌های صدایار را آزاد کن</string>
+    <string name="feature_1">یادداشت و نقاشی نامحدود</string>
+    <string name="feature_2">تبدیل گفتار به متن فارسی و انگلیسی</string>
+    <string name="feature_3">خروجی و اشتراک‌گذاری سریع</string>
+    <string name="feature_4">رنگ‌بندی اختصاصی یادداشت‌ها</string>
+    <string name="feature_5">تم‌ها و ابزارهای پیشرفته (به‌زودی)</string>
+    <string name="feature_6">همگام‌سازی ابری یادداشت‌ها (به‌زودی)</string>
+    <string name="plan_monthly">ماهانه</string>
+    <string name="plan_yearly">سالانه</string>
+    <string name="plan_lifetime">همیشگی</string>
+    <string name="price_monthly">۲۹ هزار تومان</string>
+    <string name="price_yearly">۲۴۹ هزار تومان</string>
+    <string name="price_lifetime">۴۹۹ هزار تومان</string>
+    <string name="yearly_hint">معادل فقط ۲۱ هزار تومان در ماه</string>
+    <string name="badge_best">پیشنهاد ویژه</string>
+    <string name="cta_activate">فعال‌سازی صدایار پلاس</string>
+    <string name="premium_active_btn">اشتراک شما فعال است</string>
+    <string name="status_active">اشتراک صدایار پلاس فعال است. لذت ببر!</string>
+    <string name="status_inactive">اشتراک فعال نیست؛ برای فعال‌سازی روی دکمه بزن.</string>
+    <string name="soon_title">پرداخت به‌زودی!</string>
+    <string name="soon_msg">درگاه پرداخت به‌زودی به این بخش وصل می‌شود. صبور باش، داریم روش کار می‌کنیم!</string>
+    <string name="dev_unlock_toast">حالت تست: وضعیت اشتراک عوض شد</string>
+</resources>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Sedayar</string>
+
+    <!-- Main screen -->
+    <string name="new_note">New note</string>
+    <string name="search_hint">Search notes…</string>
+    <string name="empty_title">No notes yet!</string>
+    <string name="empty_subtitle">Tap + and create your first voice note</string>
+    <string name="untitled">Untitled</string>
+
+    <!-- Editor -->
+    <string name="edit_note">Edit note</string>
+    <string name="hint_title">Title…</string>
+    <string name="hint_content">Write here, or tap the mic and speak…</string>
+    <string name="say_something">Speak</string>
+    <string name="listening">Listening…</string>
+    <string name="mode_text">Text</string>
+    <string name="mode_draw">Draw</string>
+    <string name="save">Save</string>
+    <string name="saved">Saved</string>
+    <string name="lang_changed">Speech language</string>
+    <string name="lang_fa">فا</string>
+    <string name="lang_en">EN</string>
+
+    <!-- Speech errors -->
+    <string name="speech_unavailable">Speech recognition is not available on this device</string>
+    <string name="speech_error_network">Internet connection is required for speech recognition</string>
+    <string name="speech_error_no_match">Nothing heard; try again</string>
+    <string name="speech_error_busy">Speech engine is busy; try again in a moment</string>
+    <string name="speech_error_generic">Speech recognition error</string>
+    <string name="mic_rationale">Microphone permission is required to convert speech to text</string>
+
+    <!-- Common -->
+    <string name="delete">Delete</string>
+    <string name="delete_confirm_title">Delete this note?</string>
+    <string name="delete_confirm_msg">This note will be removed permanently and cannot be restored.</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+    <string name="pin">Pin</string>
+    <string name="unpin">Unpin</string>
+    <string name="share">Share</string>
+    <string name="share_via">Share via</string>
+    <string name="share_text_empty">Note is empty!</string>
+    <string name="color">Note color</string>
+    <string name="color_saved">Note color updated</string>
+    <string name="note_deleted">Note deleted</string>
+    <string name="offline_mode">Offline speech</string>
+    <string name="offline_on_toast">Offline mode ON (requires Google offline speech pack)</string>
+    <string name="offline_off_toast">Offline mode OFF</string>
+
+    <!-- Drawing -->
+    <string name="eraser">Eraser</string>
+    <string name="undo">Undo</string>
+    <string name="redo">Redo</string>
+    <string name="clear_canvas">Clear canvas</string>
+
+    <!-- Accessibility -->
+    <string name="cd_pen_color">Pen color</string>
+    <string name="cd_pen_width">Pen width</string>
+    <string name="cd_mic">Microphone</string>
+    <string name="cd_language">Speech language</string>
+    <string name="cd_pin">Pinned</string>
+    <string name="cd_thumbnail">Drawing preview</string>
+
+    <!-- Premium -->
+    <string name="premium">Sedayar Plus</string>
+    <string name="plus_title">Sedayar Plus</string>
+    <string name="plus_subtitle">Unlock everything Sedayar can do</string>
+    <string name="feature_1">Unlimited notes &amp; drawings</string>
+    <string name="feature_2">Persian &amp; English speech-to-text</string>
+    <string name="feature_3">Fast export &amp; sharing</string>
+    <string name="feature_4">Custom note colors</string>
+    <string name="feature_5">Advanced themes &amp; tools (coming soon)</string>
+    <string name="feature_6">Cloud sync (coming soon)</string>
+    <string name="plan_monthly">Monthly</string>
+    <string name="plan_yearly">Yearly</string>
+    <string name="plan_lifetime">Lifetime</string>
+    <string name="price_monthly">29,000 T</string>
+    <string name="price_yearly">249,000 T</string>
+    <string name="price_lifetime">499,000 T</string>
+    <string name="yearly_hint">Only 21,000 T per month</string>
+    <string name="badge_best">Best value</string>
+    <string name="cta_activate">Activate Sedayar Plus</string>
+    <string name="premium_active_btn">Your subscription is active</string>
+    <string name="status_active">Sedayar Plus is active. Enjoy!</string>
+    <string name="status_inactive">No active subscription; tap the button to subscribe.</string>
+    <string name="soon_title">Payments coming soon!</string>
+    <string name="soon_msg">A payment gateway will be connected to this screen very soon. Stay tuned!</string>
+    <string name="dev_unlock_toast">Test mode: subscription state changed</string>
+</resources>
