@@ -2,6 +2,7 @@ package com.sedayar.app.fragment;
 
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.graphics.drawable.GradientDrawable;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
@@ -12,14 +13,15 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.snackbar.Snackbar;
 import com.sedayar.app.R;
 import com.sedayar.app.SedayarApp;
@@ -28,19 +30,36 @@ import com.sedayar.app.databinding.FragmentHandwritingBinding;
 import com.sedayar.app.util.DateUtils;
 import com.sedayar.app.view.DrawingView;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.File;
+import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /**
- * Handwriting tab: a full-screen canvas for writing during class. With
- * "Record class" (Lecture Mode) it also records the professor's voice and
- * links every stroke to a moment in the audio, so playback can jump to
- * exactly where something was written.
+ * Handwriting tab — a proper A4 notebook: bounded paper sheets (210:297) that
+ * can never stretch under the status bar, multiple pages ("برگه"), and every
+ * page holds both handwriting and typed text. With "Record class" (Lecture
+ * Mode) the professor's voice is recorded and every page/stroke is linked to
+ * the exact moment it appeared, so playback replays the class like a live
+ * blackboard.
  */
 public class HandwritingFragment extends Fragment {
 
     private static final int REQ_REC = 2002;
     private static final String TAG = "Handwriting";
+    private static final int MAX_PAGES = 40;
+
+    /** One notebook page: strokes + typed text + the moment it was born. */
+    private static final class LecturePage {
+        /** ms since recording start when this page was created; 0 for the first page; -1 when never recorded. */
+        long bornMs = -1L;
+        String text = "";
+        List<DrawingView.StrokeData> strokes = new ArrayList<>();
+    }
 
     private FragmentHandwritingBinding binding;
 
@@ -50,10 +69,14 @@ public class HandwritingFragment extends Fragment {
     private long recStart = 0;
     private final Handler recTimer = new Handler(Looper.getMainLooper());
 
+    private final List<LecturePage> pages = new ArrayList<>();
+    private int pageIndex = 0;
+    private boolean textMode = false;
+
     private final Runnable recTick = new Runnable() {
         @Override
         public void run() {
-            if (recording) {
+            if (recording && binding != null) {
                 long s = (SystemClock.elapsedRealtime() - recStart) / 1000;
                 binding.tvRecTime.setText(String.format(Locale.US, "REC %02d:%02d",
                         s / 60, s % 60));
@@ -75,17 +98,66 @@ public class HandwritingFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        pages.clear();
+        pages.add(new LecturePage());
+        pageIndex = 0;
+        textMode = false;
+
         setupToolbar();
-        binding.tvRecHint.setVisibility(View.GONE);
+        sizePaperOnLayout();
+        updatePageLabel();
     }
 
+    // ------------------------------------------------------------- paper A4
+
+    /** Keeps the sheet at a real A4 ratio, centered inside its holder. */
+    private void sizePaperOnLayout() {
+        binding.paperHolder.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or2, ob) -> sizePaper());
+        binding.paperHolder.getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        binding.paperHolder.getViewTreeObserver()
+                                .removeOnGlobalLayoutListener(this);
+                        sizePaper();
+                    }
+                });
+    }
+
+    private void sizePaper() {
+        if (binding == null) {
+            return;
+        }
+        int availW = binding.paperHolder.getWidth() - dp(28);
+        int availH = binding.paperHolder.getHeight() - dp(20);
+        if (availW <= 0 || availH <= 0) {
+            return;
+        }
+        final float ratio = 297f / 210f; // A4
+        int w, h;
+        if (availW * ratio <= availH) {
+            w = availW;
+            h = Math.round(w * ratio);
+        } else {
+            h = availH;
+            w = Math.round(h / ratio);
+        }
+        ViewGroup.LayoutParams lp = binding.paperCard.getLayoutParams();
+        if (lp.width != w || lp.height != h) {
+            lp.width = w;
+            lp.height = h;
+            binding.paperCard.setLayoutParams(lp);
+        }
+    }
+
+    // ----------------------------------------------------------------- tools
+
     private void setupToolbar() {
-        final int[] penColors = {0xFF1F2937, 0xFF4F6DF5, 0xFFDC2626, 0xFF16A34A, 0xFFD97706};
+        final int[] penColors = {0xFF26251E, 0xFF1D3A6D, 0xFFC0392B, 0xFF1E8449, 0xFFA8861D};
         final View[] pens = {binding.pen0, binding.pen1, binding.pen2, binding.pen3, binding.pen4};
         for (int i = 0; i < pens.length; i++) {
-            android.graphics.drawable.GradientDrawable d =
-                    new android.graphics.drawable.GradientDrawable();
-            d.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+            GradientDrawable d = new GradientDrawable();
+            d.setShape(GradientDrawable.OVAL);
             d.setColor(penColors[i]);
             d.setStroke(dp(2), ContextCompat.getColor(requireContext(), R.color.stroke));
             pens[i].setBackground(d);
@@ -100,9 +172,8 @@ public class HandwritingFragment extends Fragment {
         final View[] widths = {binding.width1, binding.width2, binding.width3};
         final float[] widthPx = {dp(4), dp(7), dp(11)};
         for (int i = 0; i < widths.length; i++) {
-            android.graphics.drawable.GradientDrawable d =
-                    new android.graphics.drawable.GradientDrawable();
-            d.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+            GradientDrawable d = new GradientDrawable();
+            d.setShape(GradientDrawable.OVAL);
             d.setColor(ContextCompat.getColor(requireContext(), R.color.text_secondary));
             widths[i].setBackground(d);
             final int idx = i;
@@ -115,8 +186,10 @@ public class HandwritingFragment extends Fragment {
         binding.drawingView.setStrokeWidth(dp(7));
 
         binding.drawingView.setStrokesChangedListener((canUndo, canRedo) -> {
-            binding.btnUndo.setEnabled(canUndo);
-            binding.btnRedo.setEnabled(canRedo);
+            if (binding != null) {
+                binding.btnUndo.setEnabled(canUndo);
+                binding.btnRedo.setEnabled(canRedo);
+            }
         });
 
         binding.btnErase.setOnClickListener(v -> {
@@ -128,9 +201,92 @@ public class HandwritingFragment extends Fragment {
         });
         binding.btnUndo.setOnClickListener(v -> binding.drawingView.undo());
         binding.btnRedo.setOnClickListener(v -> binding.drawingView.redo());
-        binding.btnClear.setOnClickListener(v -> binding.drawingView.clearAll());
+        binding.btnClear.setOnClickListener(v -> {
+            binding.drawingView.clearAll();
+            pages.get(pageIndex).strokes.clear();
+        });
         binding.btnSaveCanvas.setOnClickListener(v -> save());
         binding.btnRec.setOnClickListener(v -> onRecClicked());
+
+        // draw <-> type
+        binding.btnTextMode.setOnClickListener(v -> setTextMode(!textMode));
+
+        // pages
+        binding.btnPageAdd.setOnClickListener(v -> addPage());
+        binding.btnPagePrev.setOnClickListener(v -> switchPage(-1));
+        binding.btnPageNext.setOnClickListener(v -> switchPage(1));
+    }
+
+    private void setTextMode(boolean on) {
+        setTextMode(on, true);
+    }
+
+    private void setTextMode(boolean on, boolean notify) {
+        textMode = on;
+        binding.etTyped.setVisibility(on ? View.VISIBLE : View.GONE);
+        binding.drawingView.setVisibility(on ? View.GONE : View.VISIBLE);
+        binding.toolsDraw.setVisibility(on ? View.GONE : View.VISIBLE);
+        binding.btnTextMode.setIconTint(ColorStateList.valueOf(ContextCompat.getColor(
+                requireContext(), on ? R.color.gold_deep : R.color.on_primary_container)));
+        if (notify) {
+            Toast.makeText(requireContext(), on ? R.string.mode_type_on : R.string.mode_draw_on,
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // ----------------------------------------------------------------- pages
+
+    private void commitCurrentPage() {
+        LecturePage p = pages.get(pageIndex);
+        p.strokes = binding.drawingView.snapshotStrokes();
+        p.text = binding.etTyped.getText() == null ? "" : binding.etTyped.getText().toString();
+    }
+
+    private void showPage(int index) {
+        LecturePage p = pages.get(index);
+        binding.drawingView.restoreStrokes(p.strokes);
+        binding.etTyped.setText(p.text);
+        binding.etTyped.setSelection(p.text.length());
+        pageIndex = index;
+        updatePageLabel();
+    }
+
+    private void updatePageLabel() {
+        binding.tvPage.setText(String.format(Locale.US,
+                getString(R.string.page_x_of_y), pageIndex + 1, pages.size()));
+        boolean canPrev = pageIndex > 0;
+        boolean canNext = pageIndex < pages.size() - 1;
+        binding.btnPagePrev.setEnabled(canPrev);
+        binding.btnPageNext.setEnabled(canNext);
+        binding.btnPagePrev.setAlpha(canPrev ? 1f : 0.35f);
+        binding.btnPageNext.setAlpha(canNext ? 1f : 0.35f);
+    }
+
+    private void addPage() {
+        if (pages.size() >= MAX_PAGES) {
+            Toast.makeText(requireContext(), R.string.page_limit, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        commitCurrentPage();
+        LecturePage p = new LecturePage();
+        p.bornMs = recording ? (SystemClock.elapsedRealtime() - recStart) : -1L;
+        pages.add(p);
+        binding.drawingView.restoreStrokes(p.strokes);
+        binding.etTyped.setText("");
+        pageIndex = pages.size() - 1;
+        updatePageLabel();
+        if (recording) {
+            Toast.makeText(requireContext(), R.string.page_added, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void switchPage(int dir) {
+        int target = pageIndex + dir;
+        if (target < 0 || target >= pages.size()) {
+            return;
+        }
+        commitCurrentPage();
+        showPage(target);
     }
 
     // ---------------------------------------------------------- lecture mode
@@ -143,7 +299,7 @@ public class HandwritingFragment extends Fragment {
         if (ContextCompat.checkSelfPermission(requireContext(),
                 android.Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(requireActivity(),
+            androidx.core.app.ActivityCompat.requestPermissions(requireActivity(),
                     new String[]{android.Manifest.permission.RECORD_AUDIO}, REQ_REC);
             return;
         }
@@ -176,6 +332,12 @@ public class HandwritingFragment extends Fragment {
         recording = true;
         recStart = SystemClock.elapsedRealtime();
         binding.drawingView.startTiming(recStart);
+        // pages created before the recording belongs to the very beginning
+        for (LecturePage p : pages) {
+            if (p.bornMs < 0) {
+                p.bornMs = 0L;
+            }
+        }
         binding.recCard.setBackgroundTintList(ColorStateList.valueOf(
                 ContextCompat.getColor(requireContext(), R.color.rec_bg)));
         binding.tvRecHint.setVisibility(View.VISIBLE);
@@ -228,12 +390,25 @@ public class HandwritingFragment extends Fragment {
 
     // ------------------------------------------------------------------ save
 
+    private boolean notebookEmpty() {
+        for (LecturePage p : pages) {
+            if (!p.strokes.isEmpty() || !(p.text == null || p.text.trim().isEmpty())) {
+                return false;
+            }
+        }
+        return !recording && binding.drawingView.isEmpty();
+    }
+
     /** Builds the lecture note (stops the recorder). Null when nothing to save. */
     private Note buildNote() {
-        boolean hasDrawing = binding != null && !binding.drawingView.isEmpty();
-        if (!hasDrawing && !recording) {
+        if (binding == null) {
             return null;
         }
+        boolean empty = notebookEmpty();
+        if (empty && !recording) {
+            return null;
+        }
+        commitCurrentPage();
         long audioDuration = stopRecording();
 
         Note note = new Note();
@@ -246,18 +421,99 @@ public class HandwritingFragment extends Fragment {
                 drawings.mkdirs();
             }
             String base = "lecture_" + note.createdAt;
-
-            File png = new File(drawings, base + ".png");
-            if (hasDrawing && binding.drawingView.saveTo(png)) {
-                note.drawingPath = png.getAbsolutePath();
-            }
+            int canvasW = Math.max(1, binding.drawingView.canvasWidth());
+            int canvasH = Math.max(1, binding.drawingView.canvasHeight());
 
             if (audioFile != null && audioFile.exists()) {
+                // --- full notebook export (JSON v2) ---
                 note.audioPath = audioFile.getAbsolutePath();
-                File timing = new File(drawings, base + ".json");
-                if (binding.drawingView.exportTimings(timing, audioDuration)) {
-                    note.timingPath = timing.getAbsolutePath();
+
+                JSONArray pagesJson = new JSONArray();
+                String firstImage = null;
+                StringBuilder allText = new StringBuilder();
+                for (int i = 0; i < pages.size(); i++) {
+                    LecturePage p = pages.get(i);
+                    JSONObject pj = new JSONObject();
+                    pj.put("bornMs", Math.max(0, p.bornMs));
+
+                    String text = p.text == null ? "" : p.text.trim();
+                    if (!text.isEmpty()) {
+                        pj.put("text", text);
+                        if (allText.length() > 0) {
+                            allText.append("\n\n");
+                        }
+                        allText.append(text);
+                    }
+
+                    boolean hasStrokes = !p.strokes.isEmpty();
+                    if (hasStrokes) {
+                        File png = new File(drawings, base + "_p" + i + ".png");
+                        if (DrawingView.renderStrokes(p.strokes, canvasW, canvasH, png)) {
+                            pj.put("image", png.getName());
+                            if (firstImage == null) {
+                                firstImage = png.getAbsolutePath();
+                            }
+                        }
+                        JSONArray arr = new JSONArray();
+                        for (DrawingView.StrokeData d : p.strokes) {
+                            JSONObject o = new JSONObject();
+                            o.put("c", d.color);
+                            o.put("w", d.width);
+                            o.put("e", d.eraser ? 1 : 0);
+                            o.put("t", Math.max(0, d.timeMs));
+                            JSONArray pts = new JSONArray();
+                            for (float[] pt : d.points) {
+                                pts.put(Math.round(pt[0]));
+                                pts.put(Math.round(pt[1]));
+                            }
+                            o.put("p", pts);
+                            arr.put(o);
+                        }
+                        pj.put("strokes", arr);
+                    }
+                    pagesJson.put(pj);
                 }
+
+                JSONObject root = new JSONObject();
+                root.put("version", 2);
+                root.put("canvasW", canvasW);
+                root.put("canvasH", canvasH);
+                root.put("durationMs", audioDuration);
+                root.put("pages", pagesJson);
+
+                File timing = new File(drawings, base + ".json");
+                FileOutputStream fos = new FileOutputStream(timing);
+                fos.write(root.toString().getBytes("UTF-8"));
+                fos.flush();
+                fos.close();
+                note.timingPath = timing.getAbsolutePath();
+                note.drawingPath = firstImage; // thumbnail = first drawn page
+                if (allText.length() > 0) {
+                    note.content = allText.toString();
+                }
+            } else {
+                // --- no audio: keep the old single-image behaviour ---
+                StringBuilder allText = new StringBuilder();
+                String firstImage = null;
+                for (int i = 0; i < pages.size(); i++) {
+                    LecturePage p = pages.get(i);
+                    if (!p.strokes.isEmpty()) {
+                        File png = new File(drawings, base + "_p" + i + ".png");
+                        if (DrawingView.renderStrokes(p.strokes, canvasW, canvasH, png)
+                                && firstImage == null) {
+                            firstImage = png.getAbsolutePath();
+                        }
+                    }
+                    String text = p.text == null ? "" : p.text.trim();
+                    if (!text.isEmpty()) {
+                        if (allText.length() > 0) {
+                            allText.append("\n\n");
+                        }
+                        allText.append(text);
+                    }
+                }
+                note.drawingPath = firstImage;
+                note.content = allText.toString();
             }
         } catch (Exception e) {
             Log.e(TAG, "save failed", e);
@@ -275,7 +531,7 @@ public class HandwritingFragment extends Fragment {
             if (!isAdded() || binding == null) {
                 return;
             }
-            binding.drawingView.clearAll();
+            resetNotebook();
             Snackbar.make(binding.getRoot(), R.string.lecture_saved,
                     Snackbar.LENGTH_LONG).show();
         });
@@ -292,12 +548,23 @@ public class HandwritingFragment extends Fragment {
         }
     }
 
+    private void resetNotebook() {
+        pages.clear();
+        pages.add(new LecturePage());
+        pageIndex = 0;
+        binding.drawingView.clearAll();
+        binding.etTyped.setText("");
+        if (textMode) {
+            setTextMode(false, false);
+        }
+        updatePageLabel();
+    }
+
     // -------------------------------------------------------------- painting
 
     private void highlightPens(View[] pens, int selected) {
         for (int i = 0; i < pens.length; i++) {
-            android.graphics.drawable.GradientDrawable d =
-                    (android.graphics.drawable.GradientDrawable) pens[i].getBackground();
+            GradientDrawable d = (GradientDrawable) pens[i].getBackground();
             d.setStroke(dp(2), ContextCompat.getColor(requireContext(),
                     i == selected ? R.color.primary : R.color.stroke));
         }
@@ -308,8 +575,7 @@ public class HandwritingFragment extends Fragment {
 
     private void highlightWidths(View[] widths, int selected) {
         for (int i = 0; i < widths.length; i++) {
-            android.graphics.drawable.GradientDrawable d =
-                    (android.graphics.drawable.GradientDrawable) widths[i].getBackground();
+            GradientDrawable d = (GradientDrawable) widths[i].getBackground();
             d.setColor(ContextCompat.getColor(requireContext(),
                     i == selected ? R.color.primary : R.color.text_secondary));
         }
@@ -349,7 +615,7 @@ public class HandwritingFragment extends Fragment {
         super.onDestroyView();
         recTimer.removeCallbacks(recTick);
         // Leaving this tab mid-lecture: stop audio and persist everything
-        // (drawing + audio + stroke timings) so nothing is lost.
+        // (pages + strokes + text + audio + timings) so nothing is lost.
         autoSaveOnExit();
         if (recorder != null) {
             try {
@@ -363,6 +629,7 @@ public class HandwritingFragment extends Fragment {
             recorder = null;
         }
         recording = false;
+        pages.clear();
         binding = null;
     }
 

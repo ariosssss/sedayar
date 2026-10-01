@@ -15,6 +15,7 @@ public final class AppPrefs {
     private static final String KEY_SPEECH_LANG = "speech_lang";
     private static final String KEY_OFFLINE = "offline_speech";
     private static final String KEY_WELCOMED = "welcomed";
+    private static final String KEY_APP_LANG = "app_lang";
 
     private static final String KEY_USE_API = "audio_use_api";
     private static final String KEY_API_ENDPOINT = "audio_api_endpoint";
@@ -49,6 +50,17 @@ public final class AppPrefs {
 
     public static void setWelcomed(Context c) {
         prefs(c).edit().putBoolean(KEY_WELCOMED, true).apply();
+    }
+
+    // -------------------------------------------------------- app language
+
+    /** In-app UI language: "fa" (default — the app is Persian-first) or "en". */
+    public static String appLang(Context c) {
+        return prefs(c).getString(KEY_APP_LANG, "fa");
+    }
+
+    public static void setAppLang(Context c, String lang) {
+        prefs(c).edit().putString(KEY_APP_LANG, lang).apply();
     }
 
     // ------------------------------------------------------------- speech

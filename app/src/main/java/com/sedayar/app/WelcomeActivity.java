@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.sedayar.app.databinding.ActivityWelcomeBinding;
 import com.sedayar.app.util.AppPrefs;
+import com.sedayar.app.util.InsetsUtil;
 
 /**
  * First-launch welcome (خوشامدگویی): a Persian girih-patterned night screen
@@ -21,6 +22,7 @@ public class WelcomeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityWelcomeBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        InsetsUtil.apply(binding.getRoot(), null);
 
         binding.btnStart.setOnClickListener(v -> {
             AppPrefs.setWelcomed(this);

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Aged cream paper with a visible-but-soft golden girih lattice -->
+<!-- Lapis app bar with a subtle golden girih pattern -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@color/paper" />
+    <item android:drawable="@color/lapis" />
     <item>
         <bitmap
-            android:src="@drawable/pattern_paper"
+            android:src="@drawable/pattern_toolbar"
             android:tileMode="repeat" />
     </item>
 </layer-list>

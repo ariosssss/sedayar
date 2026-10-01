@@ -17,42 +17,39 @@
         android:paddingTop="40dp"
         android:paddingBottom="24dp">
 
-        <!-- Logo medallion -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="96dp"
-            android:layout_height="96dp"
+        <!-- Shamseh medallion (golden 8-pointed star) -->
+        <ImageView
+            android:layout_width="148dp"
+            android:layout_height="148dp"
             android:layout_gravity="center_horizontal"
-            app:cardBackgroundColor="@color/welcome_card"
-            app:cardCornerRadius="48dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/gold"
-            app:strokeWidth="2dp">
-
-            <ImageView
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:layout_gravity="center"
-                android:contentDescription="@string/app_name"
-                android:src="@drawable/ic_mic"
-                app:tint="@color/gold" />
-        </com.google.android.material.card.MaterialCardView>
+            android:layout_marginTop="8dp"
+            android:contentDescription="@string/app_name"
+            android:src="@drawable/shamseh" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="@string/app_name"
-            android:textColor="@color/gold"
-            android:textSize="34sp"
-            android:textStyle="bold" />
+            android:textAppearance="@style/TextAppearance.Sedayar.Display"
+            android:textColor="@color/gold_bright"
+            android:textSize="40sp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:text="@string/welcome_tagline"
-            android:textColor="@color/cream_text"
-            android:textSize="14sp" />
+            android:textColor="@color/gold_bright"
+            android:textSize="15sp" />
+
+        <ImageView
+            android:layout_width="240dp"
+            android:layout_height="20dp"
+            android:layout_marginTop="10dp"
+            android:alpha="0.9"
+            android:contentDescription="@string/app_name"
+            android:src="@drawable/ornament_row" />
 
         <!-- Greeting card -->
         <com.google.android.material.card.MaterialCardView
@@ -75,8 +72,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/welcome_greeting"
-                    android:textColor="@color/cream_text"
-                    android:textSize="20sp"
+                    android:textColor="@color/gold_bright"
+                    android:textAppearance="@style/TextAppearance.Sedayar.Display"
                     android:textStyle="bold" />
 
                 <TextView

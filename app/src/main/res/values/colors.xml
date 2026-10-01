@@ -1,32 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Persian palette: warm cream paper, turquoise (firoozehei) ink,
-         lapis (lajvard) night and gold (tala) accents -->
-    <color name="paper">#FAF6EE</color>
-    <color name="surface">#FFFFFF</color>
-    <color name="primary">#0F7B84</color>
-    <color name="primary_dark">#0B5E66</color>
-    <color name="primary_container">#D8F0F0</color>
-    <color name="on_primary_container">#084C52</color>
-    <color name="on_primary">#FFFFFF</color>
-    <color name="text_primary">#232A33</color>
-    <color name="text_secondary">#6E7480</color>
-    <color name="stroke">#E8E1D2</color>
+    <!-- Persian-Islamic palette v2 (bold): lapis lajvard + gold tala +
+         turquoise firoozeh on aged cream paper -->
+    <color name="paper">#F6EFDE</color>
+    <color name="surface">#FFFDF4</color>
+    <color name="surface_dim">#F1E8D2</color>
+
+    <color name="primary">#1D3A6D</color>          <!-- lapis lajvard -->
+    <color name="primary_dark">#14294F</color>
+    <color name="primary_container">#DCE4F2</color>
+    <color name="on_primary_container">#122A55</color>
+    <color name="on_primary">#F5EEDC</color>       <!-- cream on lapis -->
+
+    <color name="turquoise">#0E7C7B</color>
+    <color name="turquoise_container">#D3ECEA</color>
+
+    <color name="text_primary">#26251E</color>
+    <color name="text_secondary">#77705C</color>
+    <color name="stroke">#E3D9C0</color>
+
     <color name="gold">#C9A227</color>
     <color name="gold_deep">#A8861D</color>
+    <color name="gold_bright">#E9C46A</color>
     <color name="on_gold">#221B04</color>
-    <color name="lapis">#0F2142</color>
-    <color name="lapis_deep">#0A1830</color>
+
+    <color name="lapis">#14294F</color>
+    <color name="lapis_deep">#0C1B37</color>
     <color name="cream_text">#F3EDDD</color>
-    <color name="welcome_card">#1A2A4E</color>
-    <color name="danger">#DC2626</color>
-    <color name="success">#16A34A</color>
-    <color name="mic_active">#EF4444</color>
-    <color name="rec_bg">#FEE2E2</color>
-    <color name="ic_launcher_background">#0F7B84</color>
+    <color name="welcome_card">#1B3158</color>
+
+    <color name="danger">#C0392B</color>
+    <color name="success">#1E8449</color>
+    <color name="mic_active">#D64541</color>
+    <color name="rec_bg">#FADBD8</color>
+    <color name="ic_launcher_background">#1D3A6D</color>
 
     <!-- Note card palette (warm Persian pastels) -->
-    <color name="note_color_0">#FFFFFF</color>
+    <color name="note_color_0">#FFFDF4</color>
     <color name="note_color_1">#FBEBC6</color>
     <color name="note_color_2">#D9F2E4</color>
     <color name="note_color_3">#FBE3E8</color>

@@ -3,20 +3,23 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_app">
+    android:background="@color/lapis">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@drawable/bg_app"
         android:orientation="vertical">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@android:color/transparent"
+            android:background="@drawable/bg_toolbar"
+            app:subtitleTextColor="@color/cream_text"
             app:title="@string/app_name"
-            app:titleTextColor="@color/text_primary" />
+            app:titleTextAppearance="@style/TextAppearance.Sedayar.Display"
+            app:titleTextColor="@color/gold_bright" />
 
         <FrameLayout
             android:id="@+id/container"
@@ -30,6 +33,10 @@
             android:layout_height="wrap_content"
             android:background="@color/surface"
             app:elevation="8dp"
+            app:itemActiveIndicatorStyle="@style/Widget.Sedayar.Nav.Indicator"
+            app:itemIconTint="@color/nav_item"
+            app:itemRippleColor="@color/gold"
+            app:itemTextColor="@color/nav_item"
             app:labelVisibilityMode="labeled"
             app:menu="@menu/menu_bottom_nav" />
     </LinearLayout>

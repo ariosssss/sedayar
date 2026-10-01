@@ -7,12 +7,16 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.drawable.GradientDrawable;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -25,9 +29,11 @@ import androidx.core.content.FileProvider;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
+import com.sedayar.app.audio.Transcript;
 import com.sedayar.app.data.Note;
 import com.sedayar.app.databinding.ActivityNoteEditorBinding;
 import com.sedayar.app.util.AppPrefs;
+import com.sedayar.app.util.InsetsUtil;
 import com.sedayar.app.util.NoteColors;
 import com.sedayar.app.util.SpeechEngine;
 
@@ -49,6 +55,12 @@ public class NoteEditorActivity extends AppCompatActivity {
     private SpeechEngine engine;
     private String speechLang;
 
+    // audio player for voice-dictation notes (audio saved with the note)
+    private MediaPlayer audioPlayer;
+    private final Handler audioTick = new Handler(Looper.getMainLooper());
+    private boolean audioPrepared = false;
+    private boolean audioDragging = false;
+
     private ObjectAnimator pulseX, pulseY;
 
     @Override
@@ -56,6 +68,7 @@ public class NoteEditorActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityNoteEditorBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        InsetsUtil.apply(binding.getRoot(), null);
 
         setSupportActionBar(binding.toolbar);
         if (getSupportActionBar() != null) {
@@ -88,6 +101,7 @@ public class NoteEditorActivity extends AppCompatActivity {
                         loaded.hasDrawing() && new File(loaded.drawingPath).exists()
                                 ? loaded.drawingPath
                                 : null);
+                setupAudioPlayer(loaded);
             });
         } else {
             current = new Note();
@@ -288,6 +302,85 @@ public class NoteEditorActivity extends AppCompatActivity {
                         : R.string.lang_en);
     }
 
+    // ------------------------------------------------------------ audio player
+
+    /** Small inline player for notes that carry a voice recording (dictation). */
+    private void setupAudioPlayer(Note note) {
+        if (binding == null || !note.hasAudio()
+                || !(new File(note.audioPath).exists())) {
+            return;
+        }
+        binding.cardAudio.setVisibility(View.VISIBLE);
+        try {
+            audioPlayer = new MediaPlayer();
+            audioPlayer.setDataSource(note.audioPath);
+            audioPlayer.setOnPreparedListener(mp -> {
+                audioPrepared = true;
+                binding.seekAudio.setMax(mp.getDuration());
+                binding.tvAudioTime.setText(Transcript.shortTime(0));
+            });
+            audioPlayer.setOnCompletionListener(mp -> {
+                binding.btnAudioPlay.setIconResource(R.drawable.ic_play);
+                binding.seekAudio.setProgress(0);
+                binding.tvAudioTime.setText(Transcript.shortTime(0));
+            });
+            audioPlayer.prepareAsync();
+        } catch (Exception e) {
+            binding.cardAudio.setVisibility(View.GONE);
+            return;
+        }
+
+        binding.btnAudioPlay.setOnClickListener(v -> {
+            if (!audioPrepared || audioPlayer == null) {
+                return;
+            }
+            if (audioPlayer.isPlaying()) {
+                audioPlayer.pause();
+                binding.btnAudioPlay.setIconResource(R.drawable.ic_play);
+            } else {
+                audioPlayer.start();
+                binding.btnAudioPlay.setIconResource(R.drawable.ic_pause);
+                audioTick.post(audioUiTick);
+            }
+        });
+        binding.seekAudio.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
+                if (fromUser) {
+                    binding.tvAudioTime.setText(Transcript.shortTime(value));
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar bar) {
+                audioDragging = true;
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar bar) {
+                audioDragging = false;
+                if (audioPrepared && audioPlayer != null) {
+                    audioPlayer.seekTo(bar.getProgress());
+                }
+            }
+        });
+    }
+
+    private final Runnable audioUiTick = new Runnable() {
+        @Override
+        public void run() {
+            if (audioPlayer != null && audioPrepared && !audioDragging
+                    && binding != null) {
+                int pos = audioPlayer.getCurrentPosition();
+                binding.seekAudio.setProgress(pos);
+                binding.tvAudioTime.setText(Transcript.shortTime(pos));
+            }
+            if (audioPlayer != null && audioPlayer.isPlaying() && binding != null) {
+                audioTick.postDelayed(this, 400);
+            }
+        }
+    };
+
     // ------------------------------------------------------------- lifecycle
 
     @Override
@@ -302,6 +395,14 @@ public class NoteEditorActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        audioTick.removeCallbacks(audioUiTick);
+        if (audioPlayer != null) {
+            try {
+                audioPlayer.release();
+            } catch (Exception ignored) {
+            }
+            audioPlayer = null;
+        }
         if (engine != null) {
             engine.destroy();
             engine = null;

@@ -47,6 +47,16 @@ public class DrawingView extends View {
         void onStrokesChanged(boolean canUndo, boolean canRedo);
     }
 
+    /** Portable copy of one stroke (for multi-page notebooks). */
+    public static final class StrokeData {
+        public int color;
+        public float width;
+        public boolean eraser;
+        /** Milliseconds since the recording started, or -1 when untimed. */
+        public long timeMs = -1L;
+        public final List<float[]> points = new ArrayList<>(); // {x, y}
+    }
+
     private Bitmap baseBitmap;      // loaded PNG (existing drawing), or null
     private Bitmap bufferBitmap;    // working buffer = base + committed strokes
     private Canvas bufferCanvas;
@@ -123,6 +133,124 @@ public class DrawingView extends View {
     /** Call when lecture recording stops; new strokes are no longer timestamped. */
     public void stopTiming() {
         this.recordingBase = -1L;
+    }
+
+    // -------------------------------------------------------- multi-page api
+
+    /** Portable copy of everything currently on the canvas. */
+    public List<StrokeData> snapshotStrokes() {
+        List<StrokeData> out = new ArrayList<>();
+        for (Stroke s : strokes) {
+            StrokeData d = new StrokeData();
+            d.color = s.paint.getColor();
+            d.width = s.paint.getStrokeWidth();
+            d.eraser = s.paint.getXfermode() != null;
+            d.timeMs = s.timeMs;
+            for (int i = 0; i < s.xs.size(); i++) {
+                d.points.add(new float[]{s.xs.get(i), s.ys.get(i)});
+            }
+            out.add(d);
+        }
+        return out;
+    }
+
+    /** Replaces the canvas content with the given page strokes. */
+    public void restoreStrokes(List<StrokeData> data) {
+        strokes.clear();
+        redoStack.clear();
+        active = null;
+        if (data != null) {
+            for (StrokeData d : data) {
+                strokes.add(toStroke(d));
+            }
+        }
+        recommitAll();
+    }
+
+    private Stroke toStroke(StrokeData d) {
+        Stroke s = new Stroke();
+        s.paint.setAntiAlias(true);
+        s.paint.setStyle(Paint.Style.STROKE);
+        s.paint.setStrokeJoin(Paint.Join.ROUND);
+        s.paint.setStrokeCap(Paint.Cap.ROUND);
+        s.paint.setStrokeWidth(d.width);
+        if (d.eraser) {
+            s.paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+        } else {
+            s.paint.setColor(d.color);
+        }
+        s.timeMs = d.timeMs;
+        for (float[] p : d.points) {
+            s.xs.add(p[0]);
+            s.ys.add(p[1]);
+        }
+        if (!d.points.isEmpty()) {
+            s.path.moveTo(d.points.get(0)[0], d.points.get(0)[1]);
+            for (int i = 1; i < d.points.size(); i++) {
+                s.path.lineTo(d.points.get(i)[0], d.points.get(i)[1]);
+            }
+        }
+        return s;
+    }
+
+    /** Canvas size in pixels (for JSON export). */
+    public int canvasWidth() {
+        return bufferBitmap == null ? getWidth() : bufferBitmap.getWidth();
+    }
+
+    public int canvasHeight() {
+        return bufferBitmap == null ? getHeight() : bufferBitmap.getHeight();
+    }
+
+    /** Renders a stroke list into a PNG file without touching the live view. */
+    public static boolean renderStrokes(List<StrokeData> data, int w, int h, File out) {
+        if (w <= 0 || h <= 0) {
+            return false;
+        }
+        Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(bmp);
+        c.drawColor(0xFFFFFFFF);
+        if (data != null) {
+            for (StrokeData d : data) {
+                Paint p = new Paint();
+                p.setAntiAlias(true);
+                p.setStyle(Paint.Style.STROKE);
+                p.setStrokeJoin(Paint.Join.ROUND);
+                p.setStrokeCap(Paint.Cap.ROUND);
+                p.setStrokeWidth(Math.max(1f, d.width));
+                if (d.eraser) {
+                    p.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+                } else {
+                    p.setColor(d.color);
+                }
+                Path path = new Path();
+                if (!d.points.isEmpty()) {
+                    path.moveTo(d.points.get(0)[0], d.points.get(0)[1]);
+                    for (int i = 1; i < d.points.size(); i++) {
+                        path.lineTo(d.points.get(i)[0], d.points.get(i)[1]);
+                    }
+                }
+                c.drawPath(path, p);
+            }
+        }
+        boolean ok = false;
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(out);
+            bmp.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            fos.flush();
+            ok = true;
+        } catch (Exception ignored) {
+        } finally {
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (Exception ignored) {
+                }
+            }
+            bmp.recycle();
+        }
+        return ok;
     }
 
     // -------------------------------------------------------------- painting
@@ -259,8 +387,7 @@ public class DrawingView extends View {
     }
 
     /**
-     * Writes every stroke (color, width, timestamp, sampled points) as JSON so
-     * playback can jump to the audio moment of a tapped stroke.
+     * Legacy single-page timing export (v1 JSON), kept for compatibility.
      */
     public boolean exportTimings(File file, long audioDurationMs) {
         try {

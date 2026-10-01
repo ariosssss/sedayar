@@ -204,4 +204,32 @@
 
     <!-- Lecture playback: progressive replay -->
     <string name="lecture_replay_hint">با پخش، نوشته‌هایت در همان لحظهٔ نوشته‌شدن ظاهر می‌شوند؛ روی هر خط بزن تا صدای همان لحظه پخش شود</string>
+
+    <!-- A4 notebook pages -->
+    <string name="type_here">اینجا تایپ کن… (همراه دست‌خط و ضبط صدا)</string>
+    <string name="mode_type">تایپ</string>
+    <string name="mode_type_on">حالت تایپ: بنویس، متن هم با صدای کلاس ذخیره می‌شود</string>
+    <string name="mode_draw_on">حالت دست‌خط</string>
+    <string name="page_add">برگهٔ جدید</string>
+    <string name="page_prev">برگهٔ قبل</string>
+    <string name="page_next">برگهٔ بعد</string>
+    <string name="page_x_of_y">برگ %1$d از %2$d</string>
+    <string name="page_added">برگهٔ جدید اضافه شد — هر برگه در همان لحظهٔ ساختن به صدا وصل می‌شود</string>
+    <string name="page_limit">بیشترین تعداد برگه‌ها</string>
+
+    <!-- Live voice: one-piece recording -->
+    <string name="live_recording_toast">صدا به‌صورت یکجا ضبط می‌شود؛ سکوت بین جمله‌ها مشکلی ندارد</string>
+    <string name="live_text_paused">ضبط صدا ادامه دارد؛ برای ادامهٔ متن دوباره میکروفون را بزن</string>
+
+    <!-- Audio tab: model missing dialog -->
+    <string name="audio_no_model_msg">مدل فارسیِ آفلاین هنوز دانلود نشده است. همین حالا دانلودش کنم؟ (حدود ۵۳ مگابایت، یک‌بار برای همیشه، بدون فیلترشکن)</string>
+
+    <!-- Audio tab: precise error stages -->
+    <string name="err_stage_read">خطا در خواندن فایل</string>
+    <string name="err_stage_decode">خطا در رمزگشایی صدا</string>
+
+    <!-- Settings: app language -->
+    <string name="app_lang_title">زبان برنامه</string>
+    <string name="app_lang_fa">فارسی (پیش‌فرض)</string>
+    <string name="app_lang_en">English</string>
 </resources>

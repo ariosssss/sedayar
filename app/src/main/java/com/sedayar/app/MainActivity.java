@@ -19,10 +19,11 @@ import com.sedayar.app.fragment.HandwritingFragment;
 import com.sedayar.app.fragment.LiveVoiceFragment;
 import com.sedayar.app.fragment.NotesFragment;
 import com.sedayar.app.util.AppPrefs;
+import com.sedayar.app.util.InsetsUtil;
 
 /**
- * App shell: toolbar + bottom navigation with four sections
- * (Notes / Live voice / Handwriting / Audio file) + a settings action.
+ * App shell: lapis toolbar with golden title + bottom navigation with four
+ * sections (Notes / Live voice / Handwriting / Audio file) + a settings action.
  */
 public class MainActivity extends AppCompatActivity {
 
@@ -36,6 +37,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        // Android 15 edge-to-edge: keep content below the clock and above the
+        // gesture bar (the drawing page used to slide under the status bar).
+        InsetsUtil.apply(binding.getRoot(), binding.bottomNav);
 
         // First launch: greet the user on the Persian-patterned welcome screen
         if (!AppPrefs.isWelcomed(this)) {

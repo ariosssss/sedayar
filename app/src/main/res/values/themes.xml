@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Light classic paper theme (always light, warm cream + blue ink) -->
+    <!-- Iranian-Islamic light theme: aged cream paper, lapis toolbar with
+         golden titles, turquoise-gold accents, Vazirmatn body + Lalezar display -->
     <style name="Theme.Sedayar" parent="Theme.Material3.Light.NoActionBar">
         <item name="colorPrimary">@color/primary</item>
         <item name="colorOnPrimary">@color/on_primary</item>
@@ -12,10 +13,19 @@
         <item name="colorOnSurfaceVariant">@color/text_secondary</item>
         <item name="colorOutline">@color/stroke</item>
         <item name="colorSecondary">@color/gold</item>
+        <item name="colorSecondaryContainer">@color/turquoise_container</item>
         <item name="android:statusBarColor">@color/lapis</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="fontFamily">@font/vazirmatn</item>
         <item name="android:fontFamily">@font/vazirmatn</item>
+    </style>
+
+    <!-- Display typography (Lalezar) for big titles / welcome / numerals -->
+    <style name="TextAppearance.Sedayar.Display" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="fontFamily">@font/lalezar</item>
+        <item name="android:fontFamily">@font/lalezar</item>
+        <item name="android:textStyle">normal</item>
+        <item name="lineHeight">36sp</item>
     </style>
 
     <style name="ShapeAppearance.Sedayar.Thumb" parent="">

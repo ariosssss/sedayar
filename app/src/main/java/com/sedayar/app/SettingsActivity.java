@@ -16,6 +16,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.sedayar.app.audio.VoskTranscriber;
 import com.sedayar.app.databinding.ActivitySettingsBinding;
 import com.sedayar.app.util.AppPrefs;
+import com.sedayar.app.util.InsetsUtil;
 
 import java.util.Locale;
 
@@ -35,6 +36,7 @@ public class SettingsActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         binding = ActivitySettingsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        InsetsUtil.apply(binding.getRoot(), null);
 
         setSupportActionBar(binding.toolbar);
         if (getSupportActionBar() != null) {
@@ -62,6 +64,12 @@ public class SettingsActivity extends AppCompatActivity
             binding.rbLangEn.setChecked(true);
         }
         binding.swOffline.setChecked(AppPrefs.offlineSpeechEnabled(this));
+
+        if ("en".equals(AppPrefs.appLang(this))) {
+            binding.rbAppEn.setChecked(true);
+        } else {
+            binding.rbAppFa.setChecked(true);
+        }
 
         binding.swUseApi.setChecked(AppPrefs.useApiEngine(this));
         binding.apiFields.setVisibility(
@@ -128,6 +136,14 @@ public class SettingsActivity extends AppCompatActivity
         }
         AppPrefs.setSpeechLang(this, lang);
         AppPrefs.setOfflineSpeech(this, binding.swOffline.isChecked());
+
+        // in-app UI language (Persian by default)
+        String newAppLang = binding.rbAppEn.isChecked() ? "en" : "fa";
+        boolean langChanged = !newAppLang.equals(AppPrefs.appLang(this));
+        AppPrefs.setAppLang(this, newAppLang);
+        if (langChanged) {
+            SedayarApp.get().applyAppLanguage(); // recreates activities
+        }
         AppPrefs.setUseApiEngine(this, binding.swUseApi.isChecked());
 
         String apiEndpoint = text(binding.etApiEndpoint);

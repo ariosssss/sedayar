@@ -4,9 +4,10 @@
     android:id="@+id/coordinator"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_app">
+    android:background="@color/lapis">
 
     <LinearLayout
+        android:background="@drawable/bg_app"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
@@ -15,8 +16,8 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@drawable/bg_app"
-            app:titleTextColor="@color/text_primary" />
+            android:background="@drawable/bg_toolbar"
+            app:titleTextColor="@color/gold_bright" />
 
         <com.google.android.material.button.MaterialButtonToggleGroup
             android:id="@+id/toggle_mode"
@@ -45,6 +46,64 @@
                 android:text="@string/mode_draw"
                 app:icon="@drawable/ic_brush" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <!-- Audio player (voice dictation saved with the note) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_audio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="10dp"
+            android:visibility="gone"
+            app:cardBackgroundColor="@color/surface"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:strokeColor="@color/stroke"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_audio_play"
+                    style="?attr/materialIconButtonFilledStyle"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:contentDescription="@string/cd_play"
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
+                    app:backgroundTint="@color/primary"
+                    app:cornerRadius="22dp"
+                    app:icon="@drawable/ic_play"
+                    app:iconSize="22dp"
+                    app:iconTint="@color/on_primary" />
+
+                <SeekBar
+                    android:id="@+id/seek_audio"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layoutDirection="ltr" />
+
+                <TextView
+                    android:id="@+id/tv_audio_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="00:00"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"

@@ -11,6 +11,7 @@ import androidx.core.content.ContextCompat;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.sedayar.app.databinding.ActivityPremiumBinding;
+import com.sedayar.app.util.InsetsUtil;
 import com.sedayar.app.util.PremiumManager;
 
 /**
@@ -42,6 +43,7 @@ public class PremiumActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityPremiumBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        InsetsUtil.apply(binding.getRoot(), null);
 
         binding.toolbar.setNavigationIcon(R.drawable.ic_back);
         binding.toolbar.setNavigationOnClickListener(v -> finish());

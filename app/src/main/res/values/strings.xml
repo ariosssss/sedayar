@@ -204,4 +204,32 @@
 
     <!-- Lecture playback: progressive replay -->
     <string name="lecture_replay_hint">While playing, your writing appears at the exact moment it was written; tap any stroke to hear that moment</string>
+
+    <!-- A4 notebook pages -->
+    <string name="type_here">Type here… (alongside handwriting and recording)</string>
+    <string name="mode_type">Type</string>
+    <string name="mode_type_on">Typing mode: your text is saved with the class audio</string>
+    <string name="mode_draw_on">Handwriting mode</string>
+    <string name="page_add">New page</string>
+    <string name="page_prev">Previous page</string>
+    <string name="page_next">Next page</string>
+    <string name="page_x_of_y">Page %1$d of %2$d</string>
+    <string name="page_added">Page added — every page is linked to its audio moment</string>
+    <string name="page_limit">Maximum number of pages</string>
+
+    <!-- Live voice: one-piece recording -->
+    <string name="live_recording_toast">Recording continuously; pauses between sentences are fine</string>
+    <string name="live_text_paused">Audio keeps recording; tap the mic to resume the transcript</string>
+
+    <!-- Audio tab: model missing dialog -->
+    <string name="audio_no_model_msg">The offline Persian model is not downloaded yet. Download it now? (~53 MB, one time, no VPN needed)</string>
+
+    <!-- Audio tab: precise error stages -->
+    <string name="err_stage_read">Error reading the file</string>
+    <string name="err_stage_decode">Error decoding the audio</string>
+
+    <!-- Settings: app language -->
+    <string name="app_lang_title">App language</string>
+    <string name="app_lang_fa">Persian (default)</string>
+    <string name="app_lang_en">English</string>
 </resources>

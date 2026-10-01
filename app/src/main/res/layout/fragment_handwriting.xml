@@ -1,23 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/surface">
+    android:background="@drawable/bg_app"
+    android:orientation="vertical">
 
-    <com.sedayar.app.view.DrawingView
-        android:id="@+id/drawing_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/surface" />
-
-    <!-- Lecture-mode recording banner -->
+    <!-- Recording bar (fixed at top — nothing floats over the paper) -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/rec_card"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="top|center_horizontal"
-        android:layout_marginTop="12dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="10dp"
         app:cardBackgroundColor="@color/surface"
         app:cardCornerRadius="24dp"
         app:cardElevation="3dp"
@@ -59,33 +54,139 @@
                 android:textColor="@color/mic_active"
                 android:textSize="14sp"
                 android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_rec_hint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:maxWidth="220dp"
+                android:text="@string/rec_hint"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp"
+                android:visibility="gone" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <TextView
-        android:id="@+id/tv_rec_hint"
+    <!-- A4 paper holder: the sheet is sized in code (210:297) and centered —
+         it can never stretch edge-to-edge or slide under the clock -->
+    <FrameLayout
+        android:id="@+id/paper_holder"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="10dp"
+        android:layout_weight="1">
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/paper_card"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            app:cardBackgroundColor="#FFFFFF"
+            app:cardCornerRadius="10dp"
+            app:cardElevation="6dp"
+            app:strokeColor="@color/stroke"
+            app:strokeWidth="1dp">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <com.sedayar.app.view.DrawingView
+                    android:id="@+id/drawing_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_typed"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@null"
+                    android:gravity="top|start"
+                    android:hint="@string/type_here"
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:lineSpacingExtra="8dp"
+                    android:padding="22dp"
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/text_secondary"
+                    android:textSize="17sp"
+                    android:visibility="gone" />
+            </FrameLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </FrameLayout>
+
+    <!-- Page navigation -->
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="96dp"
-        android:alpha="0.85"
-        android:background="@drawable/bg_live_chip"
-        android:paddingStart="14dp"
-        android:paddingEnd="14dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        android:text="@string/rec_hint"
-        android:textColor="@color/text_secondary"
-        android:textSize="12sp"
-        android:visibility="gone" />
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="6dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_page_add"
+            style="?attr/materialIconButtonFilledTonalStyle"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:contentDescription="@string/page_add"
+            android:insetLeft="0dp"
+            android:insetTop="0dp"
+            android:insetRight="0dp"
+            android:insetBottom="0dp"
+            app:backgroundTint="@color/gold"
+            app:cornerRadius="20dp"
+            app:icon="@drawable/ic_add"
+            app:iconSize="20dp"
+            app:iconTint="@color/on_gold" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_page_prev"
+            style="?attr/materialIconButtonStyle"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:contentDescription="@string/page_prev"
+            android:insetLeft="0dp"
+            android:insetTop="0dp"
+            android:insetRight="0dp"
+            android:insetBottom="0dp"
+            app:icon="@drawable/ic_next"
+            app:iconSize="20dp"
+            app:iconTint="@color/text_primary" />
+
+        <TextView
+            android:id="@+id/tv_page"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="96dp"
+            android:gravity="center"
+            android:text="@string/page_x_of_y"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_page_next"
+            style="?attr/materialIconButtonStyle"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:contentDescription="@string/page_next"
+            android:insetLeft="0dp"
+            android:insetTop="0dp"
+            android:insetRight="0dp"
+            android:insetBottom="0dp"
+            app:icon="@drawable/ic_prev"
+            app:iconSize="20dp"
+            app:iconTint="@color/text_primary" />
+    </LinearLayout>
 
     <!-- Floating tool bar -->
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
         android:layout_marginStart="12dp"
         android:layout_marginEnd="12dp"
+        android:layout_marginTop="6dp"
         android:layout_marginBottom="12dp"
         app:cardBackgroundColor="@color/surface"
         app:cardCornerRadius="22dp"
@@ -108,40 +209,16 @@
                 android:paddingTop="10dp"
                 android:paddingBottom="10dp">
 
-                <View
-                    android:id="@+id/pen0"
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
-                    android:layout_margin="4dp"
-                    android:contentDescription="@string/cd_pen_color" />
-
-                <View
-                    android:id="@+id/pen1"
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
-                    android:layout_margin="4dp"
-                    android:contentDescription="@string/cd_pen_color" />
-
-                <View
-                    android:id="@+id/pen2"
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
-                    android:layout_margin="4dp"
-                    android:contentDescription="@string/cd_pen_color" />
-
-                <View
-                    android:id="@+id/pen3"
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
-                    android:layout_margin="4dp"
-                    android:contentDescription="@string/cd_pen_color" />
-
-                <View
-                    android:id="@+id/pen4"
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
-                    android:layout_margin="4dp"
-                    android:contentDescription="@string/cd_pen_color" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_text_mode"
+                    style="?attr/materialIconButtonFilledTonalStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/mode_type"
+                    app:backgroundTint="@color/primary_container"
+                    app:cornerRadius="16dp"
+                    app:icon="@drawable/ic_text"
+                    app:iconTint="@color/on_primary_container" />
 
                 <View
                     android:layout_width="1dp"
@@ -150,26 +227,119 @@
                     android:layout_marginEnd="8dp"
                     android:background="@color/stroke" />
 
-                <View
-                    android:id="@+id/width1"
-                    android:layout_width="13dp"
-                    android:layout_height="13dp"
-                    android:layout_margin="4dp"
-                    android:contentDescription="@string/cd_pen_width" />
+                <LinearLayout
+                    android:id="@+id/tools_draw"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-                <View
-                    android:id="@+id/width2"
-                    android:layout_width="19dp"
-                    android:layout_height="19dp"
-                    android:layout_margin="4dp"
-                    android:contentDescription="@string/cd_pen_width" />
+                    <View
+                        android:id="@+id/pen0"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_margin="4dp"
+                        android:contentDescription="@string/cd_pen_color" />
 
-                <View
-                    android:id="@+id/width3"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
-                    android:layout_margin="4dp"
-                    android:contentDescription="@string/cd_pen_width" />
+                    <View
+                        android:id="@+id/pen1"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_margin="4dp"
+                        android:contentDescription="@string/cd_pen_color" />
+
+                    <View
+                        android:id="@+id/pen2"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_margin="4dp"
+                        android:contentDescription="@string/cd_pen_color" />
+
+                    <View
+                        android:id="@+id/pen3"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_margin="4dp"
+                        android:contentDescription="@string/cd_pen_color" />
+
+                    <View
+                        android:id="@+id/pen4"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_margin="4dp"
+                        android:contentDescription="@string/cd_pen_color" />
+
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="26dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@color/stroke" />
+
+                    <View
+                        android:id="@+id/width1"
+                        android:layout_width="13dp"
+                        android:layout_height="13dp"
+                        android:layout_margin="4dp"
+                        android:contentDescription="@string/cd_pen_width" />
+
+                    <View
+                        android:id="@+id/width2"
+                        android:layout_width="19dp"
+                        android:layout_height="19dp"
+                        android:layout_margin="4dp"
+                        android:contentDescription="@string/cd_pen_width" />
+
+                    <View
+                        android:id="@+id/width3"
+                        android:layout_width="25dp"
+                        android:layout_height="25dp"
+                        android:layout_margin="4dp"
+                        android:contentDescription="@string/cd_pen_width" />
+
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="26dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@color/stroke" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_erase"
+                        style="?attr/materialIconButtonStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/eraser"
+                        app:icon="@drawable/ic_eraser"
+                        app:iconTint="@color/text_secondary" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_undo"
+                        style="?attr/materialIconButtonStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/undo"
+                        app:icon="@drawable/ic_undo"
+                        app:iconTint="@color/text_secondary" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_redo"
+                        style="?attr/materialIconButtonStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/redo"
+                        app:icon="@drawable/ic_redo"
+                        app:iconTint="@color/text_secondary" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_clear"
+                        style="?attr/materialIconButtonStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/clear_canvas"
+                        app:icon="@drawable/ic_reset"
+                        app:iconTint="@color/text_secondary" />
+                </LinearLayout>
 
                 <View
                     android:layout_width="1dp"
@@ -177,49 +347,12 @@
                     android:layout_marginStart="8dp"
                     android:layout_marginEnd="8dp"
                     android:background="@color/stroke" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_erase"
-                    style="?attr/materialIconButtonStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:contentDescription="@string/eraser"
-                    app:icon="@drawable/ic_eraser"
-                    app:iconTint="@color/text_secondary" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_undo"
-                    style="?attr/materialIconButtonStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:contentDescription="@string/undo"
-                    app:icon="@drawable/ic_undo"
-                    app:iconTint="@color/text_secondary" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_redo"
-                    style="?attr/materialIconButtonStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:contentDescription="@string/redo"
-                    app:icon="@drawable/ic_redo"
-                    app:iconTint="@color/text_secondary" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_clear"
-                    style="?attr/materialIconButtonStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:contentDescription="@string/clear_canvas"
-                    app:icon="@drawable/ic_reset"
-                    app:iconTint="@color/text_secondary" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_save_canvas"
                     style="?attr/materialIconButtonFilledStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
                     android:contentDescription="@string/save"
                     app:backgroundTint="@color/primary"
                     app:cornerRadius="16dp"
@@ -228,4 +361,4 @@
             </LinearLayout>
         </HorizontalScrollView>
     </com.google.android.material.card.MaterialCardView>
-</FrameLayout>
+</LinearLayout>

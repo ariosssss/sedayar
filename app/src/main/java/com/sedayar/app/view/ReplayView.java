@@ -18,13 +18,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Replays a handwritten page in sync with the lecture audio: every stroke
- * appears at the exact moment it was written (its recorded timestamp), so a
- * note written at minute 30 appears at minute 30 — not at the beginning.
- * Tapping near a stroke reports the moment it was written (tap-to-seek).
+ * Replays a handwritten notebook in sync with the lecture audio: every stroke
+ * appears at the exact moment it was written (its recorded timestamp), and the
+ * view follows the A4 pages — when the playhead crosses a page's birth moment
+ * the sheet flips to that page. Tapping near a stroke reports the moment it
+ * was written (tap-to-seek).
  *
- * Strokes come from the JSON saved by {@link DrawingView} (canvas coordinates);
- * an optional base PNG is shown for notes without stroke data.
+ * Pages come from the JSON saved by the notebook ({@code pages[]}, v2) or a
+ * flat stroke list (v1); an optional base PNG is shown for notes without
+ * stroke data.
  */
 public class ReplayView extends View {
 
@@ -42,7 +44,17 @@ public class ReplayView extends View {
         float[] xs, ys;
     }
 
-    private final List<RStroke> strokes = new ArrayList<>();
+    /** One notebook page: born moment, typed text and its strokes. */
+    public static final class RPage {
+        public long bornMs = 0L;
+        public String text = "";
+        public final List<RStroke> strokes = new ArrayList<>();
+        public int canvasW = 1080;
+        public int canvasH = 1527;
+    }
+
+    private final List<RPage> pages = new ArrayList<>();
+    private int activePage = 0;
     private Bitmap page;                 // static page (notes without timing data)
     private Bitmap buffer;
     private Canvas bufferCanvas;
@@ -67,21 +79,34 @@ public class ReplayView extends View {
 
     // ------------------------------------------------------------------ setup
 
+    /** Multi-page content (JSON v2). Pages must be sorted by bornMs. */
+    public void setPages(List<RPage> pages) {
+        this.page = null;
+        this.pages.clear();
+        if (pages != null) {
+            this.pages.addAll(pages);
+        }
+        activePage = 0;
+        playheadMs = 0L;
+        layoutAndRecompose();
+    }
+
     /**
-     * @param page     full page PNG (used only when strokes are empty)
-     * @param strokeJsonParsed strokes; each with canvas-space points
-     * @param srcW     width of the coordinate space the points are in
-     * @param srcH     height of the coordinate space
+     * Single-page content (v1 JSON or a static PNG). Used for notes recorded
+     * before v1.3 and for notes without stroke data.
      */
     public void setContent(@Nullable Bitmap page, List<RStroke> strokes,
                            int srcW, int srcH) {
         this.page = page;
-        this.strokes.clear();
+        RPage p = new RPage();
+        p.canvasW = Math.max(1, srcW);
+        p.canvasH = Math.max(1, srcH);
         if (strokes != null) {
-            this.strokes.addAll(strokes);
+            p.strokes.addAll(strokes);
         }
-        this.canvasW = Math.max(1, srcW);
-        this.canvasH = Math.max(1, srcH);
+        this.pages.clear();
+        this.pages.add(p);
+        activePage = 0;
         playheadMs = 0L;
         layoutAndRecompose();
     }
@@ -93,9 +118,22 @@ public class ReplayView extends View {
     /** Audio position in ms; strokes written up to this moment are shown. */
     public void setPlayheadMs(long ms) {
         ms = Math.max(0, ms);
-        if (ms != playheadMs) {
+        // page flip: the active page is the last one born at/before the playhead
+        int pageAt = 0;
+        for (int i = 0; i < pages.size(); i++) {
+            if (pages.get(i).bornMs <= ms) {
+                pageAt = i;
+            }
+        }
+        boolean flipped = pageAt != activePage;
+        activePage = pageAt;
+        if (ms != playheadMs || flipped) {
             playheadMs = ms;
-            recompose();
+            if (flipped) {
+                layoutAndRecompose(); // canvas dims may differ per page
+            } else {
+                recompose();
+            }
         }
     }
 
@@ -103,8 +141,38 @@ public class ReplayView extends View {
         return playheadMs;
     }
 
+    public int getPageCount() {
+        return pages.size();
+    }
+
+    public int getActivePageIndex() {
+        return activePage;
+    }
+
+    /** Typed text of the page currently shown (may be empty). */
+    public String getActivePageText() {
+        if (activePage < 0 || activePage >= pages.size()) {
+            return "";
+        }
+        return pages.get(activePage).text == null
+                ? "" : pages.get(activePage).text;
+    }
+
+    /** Audio moment the active page appeared (for page jump buttons). */
+    public long getPageBornMs(int index) {
+        if (index < 0 || index >= pages.size()) {
+            return 0L;
+        }
+        return pages.get(index).bornMs;
+    }
+
     public boolean hasStrokes() {
-        return !strokes.isEmpty();
+        for (RPage p : pages) {
+            if (!p.strokes.isEmpty()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // -------------------------------------------------------------- rendering
@@ -128,9 +196,12 @@ public class ReplayView extends View {
     private void layoutAndRecompose() {
         int vw = getWidth();
         int vh = getHeight();
-        if (vw <= 0 || vh <= 0) {
+        if (vw <= 0 || vh <= 0 || pages.isEmpty()) {
             return;
         }
+        RPage p = pages.get(Math.max(0, Math.min(activePage, pages.size() - 1)));
+        canvasW = p.canvasW;
+        canvasH = p.canvasH;
         // fitCenter of the source canvas space into the view
         scale = Math.min(vw / (float) canvasW, vh / (float) canvasH);
         dx = (vw - canvasW * scale) / 2f;
@@ -142,9 +213,12 @@ public class ReplayView extends View {
 
     /** Rebuilds the buffer: visible strokes up to the playhead. */
     private void recompose() {
-        if (bufferCanvas == null) {
+        if (bufferCanvas == null || pages.isEmpty()) {
             return;
         }
+        RPage pg = pages.get(Math.max(0, Math.min(activePage, pages.size() - 1)));
+        List<RStroke> strokes = pg.strokes;
+
         bufferCanvas.drawColor(0, PorterDuff.Mode.CLEAR);
 
         // paper background
@@ -154,16 +228,15 @@ public class ReplayView extends View {
         m.postTranslate(dx, dy);
         m.postScale(scale, scale, dx, dy);
 
-        if (strokes.isEmpty()) {
-            if (page != null && !page.isRecycled()) {
-                bufferCanvas.drawBitmap(page, m, null);
-            }
+        if (strokes.isEmpty() && page != null && !page.isRecycled()) {
+            bufferCanvas.drawBitmap(page, m, null);
             invalidate();
             return;
         }
 
         for (RStroke s : strokes) {
-            if (s.t > playheadMs) {
+            long t = s.t < 0 ? Math.max(0, pg.bornMs) : s.t;
+            if (t > playheadMs) {
                 continue; // written later — not yet visible
             }
             s.paint.setStrokeWidth(Math.max(1f, s.baseWidth * scale));
@@ -188,10 +261,13 @@ public class ReplayView extends View {
             case MotionEvent.ACTION_UP:
                 if (Math.abs(event.getX() - touchDownX) < 24
                         && Math.abs(event.getY() - touchDownY) < 24
-                        && tapListener != null && !strokes.isEmpty()) {
+                        && tapListener != null
+                        && activePage >= 0 && activePage < pages.size()
+                        && !pages.get(activePage).strokes.isEmpty()) {
                     RStroke hit = nearest(event.getX(), event.getY(), dp(30));
                     if (hit != null) {
-                        tapListener.onStrokeTap(hit.t);
+                        tapListener.onStrokeTap(hit.t < 0
+                                ? pages.get(activePage).bornMs : hit.t);
                         return true;
                     }
                 }
@@ -203,6 +279,10 @@ public class ReplayView extends View {
 
     /** Converts view coords to canvas coords and finds the nearest stroke. */
     private RStroke nearest(float viewX, float viewY, float maxDistPx) {
+        if (activePage < 0 || activePage >= pages.size()) {
+            return null;
+        }
+        List<RStroke> strokes = pages.get(activePage).strokes;
         float cx = (viewX - dx) / scale;
         float cy = (viewY - dy) / scale;
         float maxC = maxDistPx / scale;

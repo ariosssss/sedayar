@@ -244,8 +244,13 @@ public class AudioFragment extends Fragment {
             return;
         }
         if (!apiEngine && !AppPrefs.voskModelReady(requireContext())) {
-            Toast.makeText(requireContext(), R.string.audio_no_model,
-                    Toast.LENGTH_LONG).show();
+            // the #1 cause of "transcription failed" — guide the user right here
+            new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.audio_no_model)
+                    .setMessage(R.string.audio_no_model_msg)
+                    .setPositiveButton(R.string.vosk_download, (d, w) -> downloadModel())
+                    .setNegativeButton(R.string.cancel, null)
+                    .show();
             return;
         }
 
@@ -263,7 +268,13 @@ public class AudioFragment extends Fragment {
         executor.execute(() -> {
             try {
                 // 1) copy content uri to a local file
-                File input = copyInput(fileUri);
+                File input;
+                try {
+                    input = copyInput(fileUri);
+                } catch (Exception e) {
+                    throw new Exception(getString(R.string.err_stage_read)
+                            + ": " + rootMessage(e));
+                }
                 if (cancelled.get()) {
                     throw new Exception("cancelled");
                 }
@@ -281,18 +292,24 @@ public class AudioFragment extends Fragment {
                 } else {
                     File out = new File(requireContext().getCacheDir(),
                             "decoded_" + System.currentTimeMillis() + ".wav");
-                    wav = AudioDecoder.decodeToWav(requireContext(), Uri.fromFile(input),
-                            out, new AudioDecoder.Progress() {
-                                @Override
-                                public void onProgress(float ratio) {
-                                    postProgress((int) (ratio * 40), R.string.status_decoding);
-                                }
+                    try {
+                        wav = AudioDecoder.decodeToWav(requireContext(), Uri.fromFile(input),
+                                out, new AudioDecoder.Progress() {
+                                    @Override
+                                    public void onProgress(float ratio) {
+                                        postProgress((int) (ratio * 40), R.string.status_decoding);
+                                    }
 
-                                @Override
-                                public boolean isCancelled() {
-                                    return cancelled.get();
-                                }
-                            });
+                                    @Override
+                                    public boolean isCancelled() {
+                                        return cancelled.get();
+                                    }
+                                });
+                    } catch (Exception e) {
+                        // precise "why": codec/extractor failures are reported verbatim
+                        throw new Exception(getString(R.string.err_stage_decode)
+                                + ": " + rootMessage(e));
+                    }
                 }
 
                 // 3) transcribe
@@ -314,14 +331,24 @@ public class AudioFragment extends Fragment {
                 main.post(() -> onTranscriptionDone(done));
             } catch (Exception e) {
                 if (!"cancelled".equals(e.getMessage())) {
-                    main.post(() -> Toast.makeText(requireContext(),
-                            getString(R.string.transcription_failed) + "\n"
-                                    + e.getMessage(),
+                    String msg = getString(R.string.transcription_failed) + "\n"
+                            + rootMessage(e);
+                    main.post(() -> Toast.makeText(requireContext(), msg,
                             Toast.LENGTH_LONG).show());
                 }
                 main.post(this::resetUi);
             }
         });
+    }
+
+    /** The deepest exception message — MediaCodec errors nest deeply. */
+    private String rootMessage(Throwable t) {
+        Throwable r = t;
+        while (r.getCause() != null && r.getCause() != r) {
+            r = r.getCause();
+        }
+        String m = r.getMessage();
+        return (m == null || m.trim().isEmpty()) ? r.getClass().getSimpleName() : m;
     }
 
     private Transcript transcribeVosk(File wav) throws Exception {

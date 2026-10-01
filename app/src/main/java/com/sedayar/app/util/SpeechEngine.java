@@ -40,20 +40,38 @@ public class SpeechEngine {
     private static final int RETRY_MAX = 1;
     private static final long RETRY_DELAY_MS = 400L;
 
+    /**
+     * In continuous mode a silent gap (NO_MATCH / SPEECH_TIMEOUT) never ends
+     * the session: the recognizer quietly re-arms so a whole class can be
+     * dictated without touching the screen. The counter only guards against
+     * an infinite hot loop on a broken device.
+     */
+    private static final int SILENT_RESTART_MAX = 60;
+
     private final Context context;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final Listener listener;
+    private final boolean continuous;
 
     private SpeechRecognizer recognizer;
     private String language;
     private boolean listening = false;
     private boolean destroyed = false;
     private int retries = 0;
+    private int silentRestarts = 0;
 
+    /** Non-continuous engine (single-shot dictation, e.g. the note editor). */
     public SpeechEngine(Context context, String language, Listener listener) {
+        this(context, language, listener, false);
+    }
+
+    /** Continuous engine: survives silent pauses until stop() is called. */
+    public SpeechEngine(Context context, String language, Listener listener,
+                        boolean continuous) {
         this.context = context.getApplicationContext();
         this.language = language;
         this.listener = listener;
+        this.continuous = continuous;
     }
 
     public void setLanguage(String language) {
@@ -89,6 +107,16 @@ public class SpeechEngine {
         if (recognizer == null) {
             create();
         }
+        try {
+            recognizer.startListening(buildIntent());
+        } catch (Exception e) {
+            // The service can throw if it was killed mid-session: recreate and retry once.
+            retries = 0;
+            scheduleRetry();
+        }
+    }
+
+    private Intent buildIntent() {
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
@@ -98,13 +126,7 @@ public class SpeechEngine {
         if (AppPrefs.offlineSpeechEnabled(context)) {
             intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
         }
-        try {
-            recognizer.startListening(intent);
-        } catch (Exception e) {
-            // The service can throw if it was killed mid-session: recreate and retry once.
-            retries = 0;
-            scheduleRetry();
-        }
+        return intent;
     }
 
     public void stop() {
@@ -165,6 +187,7 @@ public class SpeechEngine {
 
         @Override
         public void onBeginningOfSpeech() {
+            silentRestarts = 0; // real audio arrived — the engine works
         }
 
         @Override
@@ -190,10 +213,21 @@ public class SpeechEngine {
                     return;
                 case SpeechRecognizer.ERROR_NETWORK_TIMEOUT:
                 case SpeechRecognizer.ERROR_NETWORK:
+                    if (continuous && silentRestarts < SILENT_RESTART_MAX) {
+                        // a network hiccup mid-class must not kill the session
+                        silentRestarts++;
+                        main.postDelayed(this::quietRestart, 600L);
+                        return;
+                    }
                     listener.onError(context.getString(R.string.speech_error_network));
                     return;
                 case SpeechRecognizer.ERROR_NO_MATCH:
                 case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
+                    if (continuous && silentRestarts < SILENT_RESTART_MAX) {
+                        silentRestarts++;
+                        quietRestart();
+                        return;
+                    }
                     listener.onError(context.getString(R.string.speech_error_no_match));
                     return;
                 case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
@@ -204,9 +238,28 @@ public class SpeechEngine {
             }
         }
 
+        /** Re-arms the recognizer after a silent gap (no user-facing error). */
+        private void quietRestart() {
+            if (destroyed) {
+                return;
+            }
+            main.postDelayed(() -> {
+                if (destroyed || listening) {
+                    return;
+                }
+                create();
+                try {
+                    recognizer.startListening(buildIntent());
+                } catch (Exception ignored) {
+                    // next onError/ready cycle will retry
+                }
+            }, 250L);
+        }
+
         @Override
         public void onResults(Bundle results) {
             setListening(false);
+            silentRestarts = 0;
             ArrayList<String> list =
                     results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
             if (list != null && !list.isEmpty() && list.get(0) != null
@@ -219,7 +272,9 @@ public class SpeechEngine {
         public void onPartialResults(Bundle partialResults) {
             ArrayList<String> list = partialResults
                     .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-            if (list != null && !list.isEmpty() && list.get(0) != null) {
+            if (list != null && !list.isEmpty() && list.get(0) != null
+                    && !list.get(0).trim().isEmpty()) {
+                silentRestarts = 0;
                 listener.onPartialText(list.get(0));
             }
         }

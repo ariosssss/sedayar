@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.sedayar.app.audio.Transcript;
 import com.sedayar.app.data.Note;
 import com.sedayar.app.databinding.ActivityLecturePlaybackBinding;
+import com.sedayar.app.util.InsetsUtil;
 import com.sedayar.app.view.ReplayView;
 
 import org.json.JSONArray;
@@ -41,6 +42,7 @@ public class LecturePlaybackActivity extends AppCompatActivity {
     private long durationMs = 0;
     private boolean prepared = false;
     private boolean dragging = false;
+    private int shownPage = -1;
 
     private final Runnable uiTick = new Runnable() {
         @Override
@@ -50,6 +52,7 @@ public class LecturePlaybackActivity extends AppCompatActivity {
                 binding.seek.setProgress(pos);
                 binding.tvTime.setText(Transcript.shortTime(pos));
                 binding.replayView.setPlayheadMs(pos);
+                refreshPageBar();
             }
             tick.postDelayed(this, 400);
         }
@@ -60,6 +63,7 @@ public class LecturePlaybackActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityLecturePlaybackBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        InsetsUtil.apply(binding.getRoot(), null);
 
         setSupportActionBar(binding.toolbar);
         if (getSupportActionBar() != null) {
@@ -89,17 +93,21 @@ public class LecturePlaybackActivity extends AppCompatActivity {
         }
 
         // ---- page image (only needed when there is no stroke timing data)
-        Bitmap page = null;
         boolean hasStrokes = loadTimings(note);
         if (!hasStrokes && note.hasDrawing() && new File(note.drawingPath).exists()) {
             BitmapFactory.Options opts = new BitmapFactory.Options();
             opts.inSampleSize = sampleFor(note.drawingPath, 1600);
-            page = BitmapFactory.decodeFile(note.drawingPath, opts);
+            pageBitmap = BitmapFactory.decodeFile(note.drawingPath, opts);
         }
-        binding.replayView.setContent(page, parsedStrokes,
-                parsedCanvasW > 0 ? parsedCanvasW : 1080,
-                parsedCanvasH > 0 ? parsedCanvasH : 1920);
-        parsedStrokes.clear(); // ownership transferred to the view
+        if (hasStrokes) {
+            binding.replayView.setPages(parsedPages);
+        } else {
+            binding.replayView.setContent(pageBitmap, new ArrayList<>(),
+                    1080, 1527);
+        }
+        parsedPages.clear(); // ownership transferred to the view
+        shownPage = -1;
+        refreshPageBar();
 
         binding.replayView.setOnStrokeTapListener(timeMs -> {
             if (!prepared) {
@@ -114,7 +122,14 @@ public class LecturePlaybackActivity extends AppCompatActivity {
             binding.seek.setProgress((int) timeMs);
             binding.tvTime.setText(Transcript.shortTime(timeMs));
             binding.replayView.setPlayheadMs(timeMs);
+            refreshPageBar();
         });
+
+        // page flip buttons: jump to the moment the page was born
+        binding.btnPagePrev.setOnClickListener(v -> jumpToPage(
+                binding.replayView.getActivePageIndex() - 1));
+        binding.btnPageNext.setOnClickListener(v -> jumpToPage(
+                binding.replayView.getActivePageIndex() + 1));
 
         // ---- audio
         if (note.hasAudio() && new File(note.audioPath).exists()) {
@@ -143,6 +158,7 @@ public class LecturePlaybackActivity extends AppCompatActivity {
                 binding.seek.setProgress(0);
                 binding.tvTime.setText(Transcript.shortTime(0));
                 binding.replayView.setPlayheadMs(0);
+                refreshPageBar();
             });
             player.prepareAsync();
         } catch (Exception e) {
@@ -184,6 +200,7 @@ public class LecturePlaybackActivity extends AppCompatActivity {
                 if (prepared) {
                     player.seekTo(bar.getProgress());
                     binding.replayView.setPlayheadMs(bar.getProgress());
+                    refreshPageBar();
                 }
             }
         });
@@ -191,12 +208,53 @@ public class LecturePlaybackActivity extends AppCompatActivity {
 
     // -------------------------------------------------------- stroke timing
 
-    /** Parsed stroke list handed to the ReplayView in bind(). */
-    private final List<ReplayView.RStroke> parsedStrokes = new ArrayList<>();
-    private int parsedCanvasW = 0;
-    private int parsedCanvasH = 0;
+    /** Parsed pages/strokes handed to the ReplayView in bind(). */
+    private final List<ReplayView.RPage> parsedPages = new ArrayList<>();
+    private Bitmap pageBitmap = null;
 
-    /** Parses the timing JSON; returns true when stroke data was found. */
+    private void jumpToPage(int index) {
+        if (!prepared || index < 0 || index >= binding.replayView.getPageCount()) {
+            return;
+        }
+        long t = binding.replayView.getPageBornMs(index);
+        player.seekTo((int) t);
+        if (!player.isPlaying()) {
+            player.start();
+            binding.btnPlay.setIconResource(R.drawable.ic_pause);
+        }
+        binding.seek.setProgress((int) t);
+        binding.tvTime.setText(Transcript.shortTime(t));
+        binding.replayView.setPlayheadMs(t);
+        refreshPageBar();
+    }
+
+    /** Updates the page indicator + typed-text panel from the replay view. */
+    private void refreshPageBar() {
+        int active = binding.replayView.getActivePageIndex();
+        if (active == shownPage) {
+            return;
+        }
+        shownPage = active;
+        int count = binding.replayView.getPageCount();
+        boolean multi = count > 1;
+        binding.pageBar.setVisibility(multi ? View.VISIBLE : View.GONE);
+        if (multi) {
+            binding.tvPage.setText(String.format(java.util.Locale.US,
+                    getString(R.string.page_x_of_y), active + 1, count));
+        }
+        String text = binding.replayView.getActivePageText();
+        if (text.trim().isEmpty()) {
+            binding.cardPageText.setVisibility(View.GONE);
+        } else {
+            binding.tvPageText.setText(text);
+            binding.cardPageText.setVisibility(View.VISIBLE);
+        }
+    }
+
+    /**
+     * Parses the timing JSON into pages (v2 "pages[]") or a single v1 page.
+     * Returns true when stroke data was found.
+     */
     private boolean loadTimings(Note note) {
         if (!note.hasTiming()) {
             return false;
@@ -214,36 +272,90 @@ public class LecturePlaybackActivity extends AppCompatActivity {
             }
             fin.close();
             JSONObject root = new JSONObject(new String(raw, java.nio.charset.StandardCharsets.UTF_8));
-            parsedCanvasW = root.optInt("canvasW", 0);
-            parsedCanvasH = root.optInt("canvasH", 0);
+
+            if (root.optInt("version", 1) >= 2 && root.has("pages")) {
+                return parsePages(root);
+            }
+            // ---- legacy v1: flat stroke list
             JSONArray strokes = root.optJSONArray("strokes");
             if (strokes == null) {
                 return false;
             }
-            for (int i = 0; i < strokes.length(); i++) {
-                JSONObject s = strokes.getJSONObject(i);
-                long t = s.optLong("t", -1);
-                JSONArray pts = s.optJSONArray("p");
-                if (t < 0 || pts == null || pts.length() < 2) {
-                    continue;
-                }
-                int count = pts.length() / 2;
-                float[] xs = new float[count];
-                float[] ys = new float[count];
-                for (int p = 0; p < count; p++) {
-                    xs[p] = pts.getInt(p * 2);
-                    ys[p] = pts.getInt(p * 2 + 1);
-                }
-                parsedStrokes.add(ReplayView.buildStroke(
-                        s.optInt("c", 0xFF1F2937),
-                        (float) s.optDouble("w", 7f),
-                        s.optInt("e", 0) == 1,
-                        t, xs, ys));
+            int cw = root.optInt("canvasW", 0);
+            int ch = root.optInt("canvasH", 0);
+            List<ReplayView.RStroke> list = parseStrokes(strokes);
+            if (list.isEmpty()) {
+                return false;
             }
-            return !parsedStrokes.isEmpty();
+            ReplayView.RPage p = new ReplayView.RPage();
+            p.canvasW = cw > 0 ? cw : 1080;
+            p.canvasH = ch > 0 ? ch : 1920;
+            p.strokes.addAll(list);
+            parsedPages.add(p);
+            return true;
         } catch (Exception ignored) {
             return false;
         }
+    }
+
+    private boolean parsePages(JSONObject root) {
+        JSONArray pages = root.optJSONArray("pages");
+        if (pages == null) {
+            return false;
+        }
+        int defW = root.optInt("canvasW", 0);
+        int defH = root.optInt("canvasH", 0);
+        for (int i = 0; i < pages.length(); i++) {
+            JSONObject pj = pages.optJSONObject(i);
+            if (pj == null) {
+                continue;
+            }
+            ReplayView.RPage p = new ReplayView.RPage();
+            p.bornMs = Math.max(0, pj.optLong("bornMs", 0));
+            p.text = pj.optString("text", "");
+            p.canvasW = pj.optInt("canvasW", defW) > 0
+                    ? pj.optInt("canvasW", defW) : (defW > 0 ? defW : 1080);
+            p.canvasH = pj.optInt("canvasH", defH) > 0
+                    ? pj.optInt("canvasH", defH) : (defH > 0 ? defH : 1527);
+            JSONArray st = pj.optJSONArray("strokes");
+            if (st != null) {
+                p.strokes.addAll(parseStrokes(st));
+            }
+            parsedPages.add(p);
+        }
+        if (parsedPages.isEmpty()) {
+            return false;
+        }
+        return parsedPages.get(0).strokes.isEmpty()
+                ? parsedPages.size() > 1 : true;
+    }
+
+    private List<ReplayView.RStroke> parseStrokes(JSONArray strokes) {
+        List<ReplayView.RStroke> out = new ArrayList<>();
+        for (int i = 0; i < strokes.length(); i++) {
+            JSONObject s = strokes.optJSONObject(i);
+            if (s == null) {
+                continue;
+            }
+            long t = s.optLong("t", -1);
+            JSONArray pts = s.optJSONArray("p");
+            if (pts == null || pts.length() < 2) {
+                continue;
+            }
+            int count = pts.length() / 2;
+            float[] xs = new float[count];
+            float[] ys = new float[count];
+            for (int p = 0; p < count; p++) {
+                xs[p] = pts.optInt(p * 2);
+                ys[p] = pts.optInt(p * 2 + 1);
+            }
+            out.add(ReplayView.buildStroke(
+                    s.optInt("c", 0xFF1F2937),
+                    (float) s.optDouble("w", 7f),
+                    s.optInt("e", 0) == 1,
+                    t, xs, ys));
+        }
+        return out;
     }
 
     // ------------------------------------------------------------- lifecycle
