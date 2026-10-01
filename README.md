@@ -2,10 +2,19 @@
 
 اپلیکیشن اندرویدی **یادداشت‌برداری صوتی و کلاسی** با حس و حال دفترچه کاغذی؛ حرف بزن تا متن شود، با رنگ‌ها نقاشی بکش و دست‌نویس بنویس — همه در یک محیط ساده و زیبا.
 
+[![Build APK & Release](https://github.com/ariosssss/sedayar/actions/workflows/android.yml/badge.svg)](https://github.com/ariosssss/sedayar/actions/workflows/android.yml)
 ![Platform](https://img.shields.io/badge/platform-Android-green)
 ![Language](https://img.shields.io/badge/language-Java-orange)
 ![Min SDK](https://img.shields.io/badge/minSdk-24-blue)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
+
+## 📥 دانلود مستقیم APK
+
+آخرین نسخه را از صفحهٔ **Releases** دانلود و نصب کن (اندروید ۷ به بالا):
+
+➡️ **[دانلود صدایار از Releases](https://github.com/ariosssss/sedayar/releases/latest)**
+
+هر `push` روی `main` به‌صورت خودکار با **GitHub Actions** بیلد می‌شود (بخش Actions ← artifact). با هر تگ `v*` هم یک **Release** همراه با APK ساخته می‌شود.
 
 ---
 
@@ -111,6 +120,24 @@ sedayar/
 |---|---|
 | `RECORD_AUDIO` | برای ضبط صدای کاربر جهت تبدیل به متن |
 | `INTERNET` | برای ارتباط با سرویس گفتار گوگل (حالت آنلاین) |
+
+## بیلد خودکار با GitHub Actions
+
+فایل [`.github/workflows/android.yml`](.github/workflows/android.yml) هر بار که کد جدیدی به `main` پوش شود یا تگ `v*` بزنی، اجرا می‌شود:
+
+| تریگر | نتیجه |
+|---|---|
+| push به `main` / اجرای دستی | بیلد APK + آپلود artifact در تب Actions |
+| push تگ `v*` (مثل `v1.0.1`) | بیلد APK + ساخت **Release** با فایل قابل دانلود |
+
+برای انتشار نسخهٔ جدید کافی است:
+
+```bash
+git tag v1.0.1
+git push origin v1.0.1
+```
+
+چند دقیقه بعد، Release جدید با APK در صفحهٔ Releases ظاهر می‌شود.
 
 ## نقشه راه
 
