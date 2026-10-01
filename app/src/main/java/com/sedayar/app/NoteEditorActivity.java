@@ -9,9 +9,6 @@ import android.content.res.ColorStateList;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.speech.RecognitionListener;
-import android.speech.RecognizerIntent;
-import android.speech.SpeechRecognizer;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -32,9 +29,9 @@ import com.sedayar.app.data.Note;
 import com.sedayar.app.databinding.ActivityNoteEditorBinding;
 import com.sedayar.app.util.AppPrefs;
 import com.sedayar.app.util.NoteColors;
+import com.sedayar.app.util.SpeechEngine;
 
 import java.io.File;
-import java.util.ArrayList;
 
 /**
  * The note editor: rich text + live Google speech-to-text + drawing canvas.
@@ -49,8 +46,7 @@ public class NoteEditorActivity extends AppCompatActivity {
     private Note current;
     private boolean deleted = false;
 
-    private SpeechRecognizer recognizer;
-    private boolean listening = false;
+    private SpeechEngine engine;
     private String speechLang;
 
     private ObjectAnimator pulseX, pulseY;
@@ -116,6 +112,7 @@ public class NoteEditorActivity extends AppCompatActivity {
         binding.btnLang.setOnClickListener(v -> {
             speechLang = (speechLang != null && speechLang.startsWith("fa")) ? "en-US" : "fa-IR";
             AppPrefs.setSpeechLang(this, speechLang);
+            engine.setLanguage(speechLang);
             updateLangButton();
             Toast.makeText(this,
                     getString(R.string.lang_changed) + ": "
@@ -197,79 +194,37 @@ public class NoteEditorActivity extends AppCompatActivity {
     // ---------------------------------------------------------------- speech
 
     private void setupSpeech() {
-        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
-            binding.btnMic.setEnabled(false);
-            binding.btnMic.setText(R.string.speech_unavailable);
-            return;
-        }
-        recognizer = SpeechRecognizer.createSpeechRecognizer(this);
-        recognizer.setRecognitionListener(new RecognitionListener() {
+        engine = new SpeechEngine(this, speechLang, new SpeechEngine.Listener() {
             @Override
-            public void onReadyForSpeech(Bundle params) {
-                setListening(true);
+            public void onListeningChanged(boolean listening) {
+                setListeningVisual(listening);
             }
 
             @Override
-            public void onBeginningOfSpeech() {
+            public void onPartialText(String text) {
+                binding.tvLive.setVisibility(View.VISIBLE);
+                binding.tvLive.setText(text);
             }
 
             @Override
-            public void onRmsChanged(float rmsdB) {
+            public void onFinalText(String text) {
+                insertText(text);
             }
 
             @Override
-            public void onBufferReceived(byte[] buffer) {
-            }
-
-            @Override
-            public void onEndOfSpeech() {
-            }
-
-            @Override
-            public void onError(int error) {
-                setListening(false);
-                binding.tvLive.setVisibility(View.GONE);
-                binding.tvLive.setText("");
-                Toast.makeText(NoteEditorActivity.this,
-                        speechErrorMessage(error), Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onResults(Bundle results) {
-                setListening(false);
-                binding.tvLive.setVisibility(View.GONE);
-                binding.tvLive.setText("");
-                ArrayList<String> list =
-                        results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                if (list != null && !list.isEmpty() && list.get(0) != null) {
-                    insertText(list.get(0));
-                }
-            }
-
-            @Override
-            public void onPartialResults(Bundle partialResults) {
-                ArrayList<String> list = partialResults
-                        .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                if (list != null && !list.isEmpty() && list.get(0) != null) {
-                    binding.tvLive.setVisibility(View.VISIBLE);
-                    binding.tvLive.setText(
-                            getString(R.string.listening) + " — " + list.get(0));
-                }
-            }
-
-            @Override
-            public void onEvent(int eventType, Bundle params) {
+            public void onError(String message) {
+                Toast.makeText(NoteEditorActivity.this, message, Toast.LENGTH_SHORT).show();
             }
         });
+        if (!engine.isAvailable()) {
+            binding.btnMic.setEnabled(false);
+            binding.btnMic.setText(R.string.speech_unavailable);
+        }
     }
 
     private void onMicClicked() {
-        if (recognizer == null) {
-            Toast.makeText(this, R.string.speech_unavailable, Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (listening) {
-            recognizer.stopListening();
+        if (engine.isListening()) {
+            engine.stop();
             return;
         }
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO)
@@ -278,58 +233,14 @@ public class NoteEditorActivity extends AppCompatActivity {
                     new String[]{android.Manifest.permission.RECORD_AUDIO}, REQ_MIC);
             return;
         }
-        startRecognition();
-    }
-
-    private void startRecognition() {
-        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, speechLang);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, speechLang);
-        intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
-        if (AppPrefs.offlineSpeechEnabled(this)) {
-            intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
-        }
-        try {
-            recognizer.startListening(intent);
-        } catch (Exception e) {
-            Toast.makeText(this, R.string.speech_error_generic, Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private String speechErrorMessage(int error) {
-        switch (error) {
-            case SpeechRecognizer.ERROR_NETWORK_TIMEOUT:
-            case SpeechRecognizer.ERROR_NETWORK:
-            case SpeechRecognizer.ERROR_SERVER:
-                return getString(R.string.speech_error_network);
-            case SpeechRecognizer.ERROR_NO_MATCH:
-            case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
-                return getString(R.string.speech_error_no_match);
-            case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
-                return getString(R.string.speech_error_busy);
-            case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
-                return getString(R.string.mic_rationale);
-            default:
-                return getString(R.string.speech_error_generic);
-        }
-    }
-
-    private void insertText(String spoken) {
-        if (spoken == null || spoken.trim().isEmpty()) {
+        if (!engine.isAvailable()) {
+            Toast.makeText(this, R.string.speech_unavailable, Toast.LENGTH_LONG).show();
             return;
         }
-        String text = binding.etContent.getText().toString();
-        String add = spoken.trim();
-        if (!text.isEmpty() && !text.endsWith(" ") && !text.endsWith("\n")) {
-            add = " " + add;
-        }
-        binding.etContent.append(add + " ");
+        engine.start();
     }
 
-    private void setListening(boolean on) {
-        listening = on;
+    private void setListeningVisual(boolean on) {
         binding.btnMic.setText(on ? R.string.listening : R.string.say_something);
         binding.btnMic.setBackgroundTintList(ColorStateList.valueOf(
                 ContextCompat.getColor(this, on ? R.color.mic_active : R.color.primary)));
@@ -353,7 +264,21 @@ public class NoteEditorActivity extends AppCompatActivity {
             }
             binding.btnMic.setScaleX(1f);
             binding.btnMic.setScaleY(1f);
+            binding.tvLive.setVisibility(View.GONE);
+            binding.tvLive.setText("");
         }
+    }
+
+    private void insertText(String spoken) {
+        if (spoken == null || spoken.trim().isEmpty()) {
+            return;
+        }
+        String text = binding.etContent.getText().toString();
+        String add = spoken.trim();
+        if (!text.isEmpty() && !text.endsWith(" ") && !text.endsWith("\n")) {
+            add = " " + add;
+        }
+        binding.etContent.append(add + " ");
     }
 
     private void updateLangButton() {
@@ -368,9 +293,8 @@ public class NoteEditorActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        if (listening && recognizer != null) {
-            recognizer.stopListening();
-            setListening(false);
+        if (engine != null && engine.isListening()) {
+            engine.stop();
         }
         save();
     }
@@ -378,9 +302,9 @@ public class NoteEditorActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (recognizer != null) {
-            recognizer.destroy();
-            recognizer = null;
+        if (engine != null) {
+            engine.destroy();
+            engine = null;
         }
     }
 
@@ -390,7 +314,7 @@ public class NoteEditorActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQ_MIC) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                startRecognition();
+                engine.start();
             } else {
                 Toast.makeText(this, R.string.mic_rationale, Toast.LENGTH_LONG).show();
             }

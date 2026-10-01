@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/nav_notes"
+        android:icon="@drawable/ic_notes"
+        android:title="@string/tab_notes" />
+
+    <item
+        android:id="@+id/nav_live"
+        android:icon="@drawable/ic_mic"
+        android:title="@string/tab_live" />
+
+    <item
+        android:id="@+id/nav_draw"
+        android:icon="@drawable/ic_brush"
+        android:title="@string/tab_draw" />
+
+    <item
+        android:id="@+id/nav_audio"
+        android:icon="@drawable/ic_audio"
+        android:title="@string/tab_audio" />
+</menu>

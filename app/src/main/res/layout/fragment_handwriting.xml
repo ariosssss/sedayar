@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface">
+
+    <com.sedayar.app.view.DrawingView
+        android:id="@+id/drawing_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/surface" />
+
+    <!-- Lecture-mode recording banner -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/rec_card"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="12dp"
+        app:cardBackgroundColor="@color/surface"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="3dp"
+        app:strokeColor="@color/stroke"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="10dp"
+            android:paddingEnd="14dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_rec"
+                style="?attr/materialIconButtonFilledStyle"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:contentDescription="@string/cd_record"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                app:backgroundTint="@color/mic_active"
+                app:cornerRadius="22dp"
+                app:icon="@drawable/ic_mic"
+                app:iconSize="22dp"
+                app:iconTint="@color/on_primary" />
+
+            <TextView
+                android:id="@+id/tv_rec_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="REC 00:00"
+                android:textColor="@color/mic_active"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <TextView
+        android:id="@+id/tv_rec_hint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="96dp"
+        android:alpha="0.85"
+        android:background="@drawable/bg_live_chip"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:text="@string/rec_hint"
+        android:textColor="@color/text_secondary"
+        android:textSize="12sp"
+        android:visibility="gone" />
+
+    <!-- Floating tool bar -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginBottom="12dp"
+        app:cardBackgroundColor="@color/surface"
+        app:cardCornerRadius="22dp"
+        app:cardElevation="4dp"
+        app:strokeColor="@color/stroke"
+        app:strokeWidth="1dp">
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp">
+
+                <View
+                    android:id="@+id/pen0"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_margin="4dp"
+                    android:contentDescription="@string/cd_pen_color" />
+
+                <View
+                    android:id="@+id/pen1"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_margin="4dp"
+                    android:contentDescription="@string/cd_pen_color" />
+
+                <View
+                    android:id="@+id/pen2"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_margin="4dp"
+                    android:contentDescription="@string/cd_pen_color" />
+
+                <View
+                    android:id="@+id/pen3"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_margin="4dp"
+                    android:contentDescription="@string/cd_pen_color" />
+
+                <View
+                    android:id="@+id/pen4"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_margin="4dp"
+                    android:contentDescription="@string/cd_pen_color" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="26dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@color/stroke" />
+
+                <View
+                    android:id="@+id/width1"
+                    android:layout_width="13dp"
+                    android:layout_height="13dp"
+                    android:layout_margin="4dp"
+                    android:contentDescription="@string/cd_pen_width" />
+
+                <View
+                    android:id="@+id/width2"
+                    android:layout_width="19dp"
+                    android:layout_height="19dp"
+                    android:layout_margin="4dp"
+                    android:contentDescription="@string/cd_pen_width" />
+
+                <View
+                    android:id="@+id/width3"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:layout_margin="4dp"
+                    android:contentDescription="@string/cd_pen_width" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="26dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@color/stroke" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_erase"
+                    style="?attr/materialIconButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/eraser"
+                    app:icon="@drawable/ic_eraser"
+                    app:iconTint="@color/text_secondary" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_undo"
+                    style="?attr/materialIconButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/undo"
+                    app:icon="@drawable/ic_undo"
+                    app:iconTint="@color/text_secondary" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_redo"
+                    style="?attr/materialIconButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/redo"
+                    app:icon="@drawable/ic_redo"
+                    app:iconTint="@color/text_secondary" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_clear"
+                    style="?attr/materialIconButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/clear_canvas"
+                    app:icon="@drawable/ic_reset"
+                    app:iconTint="@color/text_secondary" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_save_canvas"
+                    style="?attr/materialIconButtonFilledStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:contentDescription="@string/save"
+                    app:backgroundTint="@color/primary"
+                    app:cornerRadius="16dp"
+                    app:icon="@drawable/ic_save"
+                    app:iconTint="@color/on_primary" />
+            </LinearLayout>
+        </HorizontalScrollView>
+    </com.google.android.material.card.MaterialCardView>
+</FrameLayout>

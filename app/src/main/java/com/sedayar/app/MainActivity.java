@@ -1,38 +1,34 @@
 package com.sedayar.app;
 
 import android.content.Intent;
-import android.graphics.drawable.GradientDrawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
-import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
-import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.StaggeredGridLayoutManager;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
-import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.android.material.snackbar.Snackbar;
-import com.sedayar.app.data.Note;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.sedayar.app.databinding.ActivityMainBinding;
-import com.sedayar.app.databinding.SheetNoteOptionsBinding;
-import com.sedayar.app.util.NoteColors;
+import com.sedayar.app.fragment.AudioFragment;
+import com.sedayar.app.fragment.HandwritingFragment;
+import com.sedayar.app.fragment.LiveVoiceFragment;
+import com.sedayar.app.fragment.NotesFragment;
 
-import java.io.File;
-import java.util.List;
-
+/**
+ * App shell: toolbar + bottom navigation with four sections
+ * (Notes / Live voice / Handwriting / Audio file) + a settings action.
+ */
 public class MainActivity extends AppCompatActivity {
 
+    private static final String STATE_TAB = "selected_tab";
+
     private ActivityMainBinding binding;
-    private NotesAdapter adapter;
-    private String query = "";
+    private int currentTab = R.id.nav_notes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,134 +38,55 @@ public class MainActivity extends AppCompatActivity {
 
         setSupportActionBar(binding.toolbar);
 
-        binding.recycler.setLayoutManager(
-                new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
-        binding.recycler.setItemAnimator(new DefaultItemAnimator());
-        adapter = new NotesAdapter(this::openNote, this::showOptions);
-        binding.recycler.setAdapter(adapter);
+        binding.bottomNav.setOnItemSelectedListener(item -> {
+            if (item.getItemId() != currentTab) {
+                currentTab = item.getItemId();
+                switchFragment();
+            }
+            return true;
+        });
 
-        binding.fab.setOnClickListener(v ->
-                startActivity(new Intent(this, NoteEditorActivity.class)));
-
-        load();
+        if (savedInstanceState != null) {
+            currentTab = savedInstanceState.getInt(STATE_TAB, R.id.nav_notes);
+        }
+        binding.bottomNav.setSelectedItemId(currentTab);
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        load();
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(STATE_TAB, currentTab);
     }
 
-    private void load() {
-        if (query.trim().isEmpty()) {
-            SedayarApp.get().repository().getAll(this::render);
+    private void switchFragment() {
+        Fragment fragment;
+        int title;
+        int id = currentTab;
+        if (id == R.id.nav_live) {
+            fragment = new LiveVoiceFragment();
+            title = R.string.tab_live;
+        } else if (id == R.id.nav_draw) {
+            fragment = new HandwritingFragment();
+            title = R.string.tab_draw;
+        } else if (id == R.id.nav_audio) {
+            fragment = new AudioFragment();
+            title = R.string.tab_audio;
         } else {
-            SedayarApp.get().repository().search(query.trim(), this::render);
+            fragment = new NotesFragment();
+            title = R.string.tab_notes;
         }
-    }
-
-    private void render(List<Note> notes) {
-        adapter.submit(notes);
-        boolean empty = notes == null || notes.isEmpty();
-        binding.emptyState.setVisibility(empty ? View.VISIBLE : View.GONE);
-        binding.recycler.setVisibility(empty ? View.GONE : View.VISIBLE);
-    }
-
-    private void openNote(Note note) {
-        Intent intent = new Intent(this, NoteEditorActivity.class);
-        intent.putExtra(NoteEditorActivity.EXTRA_NOTE_ID, note.id);
-        startActivity(intent);
-    }
-
-    // ------------------------------------------------------- note options
-
-    private void showOptions(Note note) {
-        BottomSheetDialog sheet = new BottomSheetDialog(this);
-        SheetNoteOptionsBinding sb = SheetNoteOptionsBinding.inflate(getLayoutInflater());
-
-        sb.tvSheetPin.setText(note.pinned ? R.string.unpin : R.string.pin);
-        sb.btnSheetPin.setOnClickListener(v -> {
-            sheet.dismiss();
-            SedayarApp.get().repository().setPinned(note.id, !note.pinned, this::load);
-        });
-
-        sb.btnSheetShare.setOnClickListener(v -> {
-            sheet.dismiss();
-            shareNote(note);
-        });
-
-        sb.btnSheetDelete.setOnClickListener(v -> {
-            sheet.dismiss();
-            confirmDelete(note);
-        });
-
-        View[] dots = {
-                sb.sheetColor0, sb.sheetColor1, sb.sheetColor2,
-                sb.sheetColor3, sb.sheetColor4, sb.sheetColor5
-        };
-        for (int i = 0; i < dots.length; i++) {
-            GradientDrawable d = new GradientDrawable();
-            d.setShape(GradientDrawable.OVAL);
-            d.setColor(NoteColors.color(i));
-            d.setStroke(dp(2), ContextCompat.getColor(this, R.color.stroke));
-            dots[i].setBackground(d);
-            final int idx = i;
-            dots[i].setOnClickListener(v -> {
-                sheet.dismiss();
-                SedayarApp.get().repository().setColor(note.id, idx, this::load);
-                Snackbar.make(binding.getRoot(), R.string.color_saved, Snackbar.LENGTH_SHORT).show();
-            });
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setTitle(title);
         }
-
-        sheet.setContentView(sb.getRoot());
-        sheet.show();
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction tx = fm.beginTransaction()
+                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+                .replace(R.id.container, fragment);
+        tx.commit();
+        invalidateOptionsMenu();
     }
 
-    private void confirmDelete(Note note) {
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.delete_confirm_title)
-                .setMessage(R.string.delete_confirm_msg)
-                .setPositiveButton(R.string.delete, (d, w) -> {
-                    if (note.hasDrawing()) {
-                        new File(note.drawingPath).delete();
-                    }
-                    SedayarApp.get().repository().delete(note, () -> {
-                        Snackbar.make(binding.getRoot(), R.string.note_deleted,
-                                Snackbar.LENGTH_SHORT).show();
-                        load();
-                    });
-                })
-                .setNegativeButton(R.string.cancel, null)
-                .show();
-    }
-
-    private void shareNote(Note note) {
-        String text = (note.title != null && !note.title.trim().isEmpty()
-                ? note.title.trim() + "\n\n" : "")
-                + (note.content == null ? "" : note.content.trim());
-
-        boolean hasImage = note.hasDrawing() && new File(note.drawingPath).exists();
-        if (text.trim().isEmpty() && !hasImage) {
-            Toast.makeText(this, R.string.share_text_empty, Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        Intent send = new Intent(Intent.ACTION_SEND);
-        if (hasImage) {
-            Uri uri = FileProvider.getUriForFile(this,
-                    getPackageName() + ".files", new File(note.drawingPath));
-            send.setType("image/png");
-            send.putExtra(Intent.EXTRA_STREAM, uri);
-            send.putExtra(Intent.EXTRA_TEXT, text.trim());
-            send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        } else {
-            send.setType("text/plain");
-            send.putExtra(Intent.EXTRA_TEXT, text.trim());
-        }
-        startActivity(Intent.createChooser(send, getString(R.string.share_via)));
-    }
-
-    // ------------------------------------------------------------- menu
+    // ----------------------------------------------------------------- menu
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -180,14 +97,13 @@ public class MainActivity extends AppCompatActivity {
             searchView.setQueryHint(getString(R.string.search_hint));
             searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
                 @Override
-                public boolean onQueryTextSubmit(String q) {
+                public boolean onQueryTextSubmit(String query) {
                     return true;
                 }
 
                 @Override
                 public boolean onQueryTextChange(String newText) {
-                    query = newText == null ? "" : newText;
-                    load();
+                    forwardQuery(newText);
                     return true;
                 }
             });
@@ -196,15 +112,32 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem search = menu.findItem(R.id.action_search);
+        if (search != null) {
+            search.setVisible(currentTab == R.id.nav_notes);
+        }
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    private void forwardQuery(String text) {
+        Fragment current = getSupportFragmentManager().findFragmentById(R.id.container);
+        if (current instanceof NotesFragment) {
+            ((NotesFragment) current).setSearchQuery(text == null ? "" : text);
+        }
+    }
+
+    @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == R.id.action_premium) {
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            startActivity(new Intent(this, SettingsActivity.class));
+            return true;
+        }
+        if (id == R.id.action_premium) {
             startActivity(new Intent(this, PremiumActivity.class));
             return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    private int dp(int v) {
-        return (int) (v * getResources().getDisplayMetrics().density);
     }
 }

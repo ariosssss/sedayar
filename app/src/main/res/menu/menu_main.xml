@@ -12,5 +12,12 @@
         android:id="@+id/action_premium"
         android:icon="@drawable/ic_crown"
         android:title="@string/premium"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_settings"
+        android:icon="@drawable/ic_settings"
+        android:title="@string/settings"
+        android:contentDescription="@string/cd_settings"
         app:showAsAction="always" />
 </menu>

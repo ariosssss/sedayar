@@ -3,4 +3,16 @@
     <files-path
         name="drawings"
         path="drawings/" />
+
+    <files-path
+        name="lectures"
+        path="lectures/" />
+
+    <cache-path
+        name="exports"
+        path="exports/" />
+
+    <cache-path
+        name="audio_input"
+        path="audio_input/" />
 </paths>

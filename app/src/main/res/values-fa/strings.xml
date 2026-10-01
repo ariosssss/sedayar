@@ -6,8 +6,15 @@
     <string name="new_note">یادداشت جدید</string>
     <string name="search_hint">جستجو در یادداشت‌ها…</string>
     <string name="empty_title">هنوز یادداشتی نداری!</string>
-    <string name="empty_subtitle">با دکمه + اولین یادداشت صوتی‌ات را بساز</string>
+    <string name="empty_subtitle">از نوار پایین استفاده کن: بنویس، حرف بزن یا صدا آپلود کن</string>
     <string name="untitled">بی‌عنوان</string>
+    <string name="settings">تنظیمات</string>
+
+    <!-- Bottom navigation -->
+    <string name="tab_notes">یادداشت‌ها</string>
+    <string name="tab_live">گفتار زنده</string>
+    <string name="tab_draw">دست‌نویس</string>
+    <string name="tab_audio">فایل صوتی</string>
 
     <!-- Editor -->
     <string name="edit_note">ویرایش یادداشت</string>
@@ -28,8 +35,91 @@
     <string name="speech_error_network">برای تشخیص گفتار به اینترنت نیاز است</string>
     <string name="speech_error_no_match">چیزی شنیده نشد؛ دوباره تلاش کن</string>
     <string name="speech_error_busy">موتور گفتار مشغول است؛ لحظه‌ای بعد تلاش کن</string>
+    <string name="speech_error_client">سرویس گفتار گوگل پاسخ نمی‌دهد؛ دوباره تلاش می‌کنم…</string>
     <string name="speech_error_generic">خطا در تشخیص گفتار</string>
     <string name="mic_rationale">برای تبدیل گفتار به متن، اجازه دسترسی به میکروفون لازم است</string>
+
+    <!-- Live voice tab -->
+    <string name="tap_mic_start">میکروفون را بزن و حرف بزن</string>
+    <string name="stop_listening">توقف</string>
+    <string name="transcript_title">متن گفته‌شده</string>
+    <string name="nothing_recorded">هنوز چیزی ضبط نشده</string>
+    <string name="save_dialog_title">ذخیرهٔ متن به‌عنوان یادداشت</string>
+    <string name="saved_snack">در یادداشت‌هات ذخیره شد</string>
+    <string name="open_action">باز کردن</string>
+    <string name="clear">پاک کردن</string>
+
+    <!-- Handwriting / lecture mode -->
+    <string name="rec_start">ضبط کلاس</string>
+    <string name="rec_stop">پایان ضبط</string>
+    <string name="rec_hint">هنگام ضبط، هرچه می‌نویسی به صدا متصل می‌شود</string>
+    <string name="rec_rationale">برای ضبط کلاس به اجازهٔ میکروفون نیاز است</string>
+    <string name="lecture_saved">کلاس ذخیره شد — از بخش یادداشت‌ها بازش کن</string>
+    <string name="canvas_empty">بوم خالی است!</string>
+    <string name="lecture_badge">کلاس ضبط‌شده</string>
+
+    <!-- Lecture playback -->
+    <string name="lecture_play_hint">روی هر خط بزن تا صدای همان لحظه پخش شود</string>
+    <string name="cd_play">پخش</string>
+    <string name="cd_pause">توقف موقت</string>
+
+    <!-- Audio file tab -->
+    <string name="audio_pick">انتخاب فایل صوتی</string>
+    <string name="audio_pick_hint">MP3، M4A، WAV، OGG و…</string>
+    <string name="engine_title">موتور</string>
+    <string name="engine_vosk">آفلاین (Vosk — بدون کلید)</string>
+    <string name="engine_api">Whisper API (با کلید)</string>
+    <string name="audio_start">شروع تبدیل</string>
+    <string name="audio_no_file">اول یک فایل صوتی انتخاب کن</string>
+    <string name="audio_no_key">کلید API را در تنظیمات وارد کن</string>
+    <string name="audio_no_model">مدل فارسی هنوز دانلود نشده</string>
+    <string name="status_decoding">آماده‌سازی صدا…</string>
+    <string name="status_transcribing">در حال پیاده‌سازی…</string>
+    <string name="status_loading_model">در حال بارگذاری مدل…</string>
+    <string name="audio_done">آماده شد!</string>
+    <string name="transcript_result_title">پیاده‌سازی متن</string>
+    <string name="btn_summary">خلاصه‌سازی</string>
+    <string name="btn_export">خروجی</string>
+    <string name="btn_save_note">ذخیره به‌عنوان یادداشت</string>
+    <string name="summary_offline_title">خلاصهٔ خودکار</string>
+    <string name="summary_ai_title">خلاصهٔ هوشمند</string>
+    <string name="summary_empty">متن برای خلاصه‌سازی کوتاه است</string>
+    <string name="summary_failed">خلاصه‌سازی ناموفق بود</string>
+    <string name="export_txt">متن ساده (TXT)</string>
+    <string name="export_srt">زیرنویس (SRT)</string>
+    <string name="export_md">مارک‌داون (MD)</string>
+    <string name="export_html">HTML استایل‌دار (قابل چاپ)</string>
+    <string name="transcription_failed">پیاده‌سازی ناموفق بود</string>
+    <string name="file_too_large">حجم فایل بیشتر از محدودیت API است (حدود ۲۵ مگابایت)</string>
+    <string name="note_saved">یادداشت ذخیره شد</string>
+
+    <!-- Settings -->
+    <string name="settings_title">تنظیمات</string>
+    <string name="section_speech">گفتار زنده</string>
+    <string name="speech_lang_sys">پیش‌فرض سیستم</string>
+    <string name="speech_lang_fa">فارسی</string>
+    <string name="speech_lang_en">انگلیسی</string>
+    <string name="offline_speech_pref">ترجیح تشخیص آفلاین</string>
+    <string name="section_audio">پیاده‌سازی فایل صوتی</string>
+    <string name="vosk_status_missing">دانلود نشده</string>
+    <string name="vosk_status_ready">آماده است</string>
+    <string name="vosk_download">دانلود مدل فارسی</string>
+    <string name="vosk_delete">حذف مدل</string>
+    <string name="vosk_downloading">در حال دانلود… ٪d٪</string>
+    <string name="vosk_size_hint">مدل فارسی حدود ۵۳ مگابایت است، یک‌بار دانلود می‌شود و بدون فیلترشکن کار می‌کند</string>
+    <string name="section_api">Whisper API</string>
+    <string name="use_api">به‌جای آفلاین از API استفاده کن</string>
+    <string name="api_endpoint_label">آدرس API</string>
+    <string name="api_key_label">کلید API</string>
+    <string name="api_model_label">نام مدل</string>
+    <string name="api_lang_label">کد زبان (fa / en / auto)</string>
+    <string name="section_llm">خلاصهٔ هوشمند</string>
+    <string name="llm_endpoint_label">آدرس LLM</string>
+    <string name="llm_key_label">کلید API</string>
+    <string name="llm_model_label">مدل</string>
+    <string name="settings_saved">تنظیمات ذخیره شد</string>
+    <string name="about_section">درباره</string>
+    <string name="about_version">نسخه</string>
 
     <!-- Common -->
     <string name="delete">حذف</string>
@@ -62,6 +152,9 @@
     <string name="cd_language">زبان گفتار</string>
     <string name="cd_pin">پین‌شده</string>
     <string name="cd_thumbnail">پیش‌نمایش نقاشی</string>
+    <string name="cd_settings">تنظیمات</string>
+    <string name="cd_record">ضبط کلاس</string>
+    <string name="cd_pick_file">انتخاب فایل صوتی</string>
 
     <!-- Premium -->
     <string name="premium">صدایار پلاس</string>
@@ -69,9 +162,9 @@
     <string name="plus_subtitle">همه توانایی‌های صدایار را آزاد کن</string>
     <string name="feature_1">یادداشت و نقاشی نامحدود</string>
     <string name="feature_2">تبدیل گفتار به متن فارسی و انگلیسی</string>
-    <string name="feature_3">خروجی و اشتراک‌گذاری سریع</string>
-    <string name="feature_4">رنگ‌بندی اختصاصی یادداشت‌ها</string>
-    <string name="feature_5">تم‌ها و ابزارهای پیشرفته (به‌زودی)</string>
+    <string name="feature_3">پیاده‌سازی فایل صوتی (آفلاین + API)</string>
+    <string name="feature_4">خلاصهٔ هوشمند و خروجی چندفرمته</string>
+    <string name="feature_5">حالت کلاس با دست‌خط متصل به صدا</string>
     <string name="feature_6">همگام‌سازی ابری یادداشت‌ها (به‌زودی)</string>
     <string name="plan_monthly">ماهانه</string>
     <string name="plan_yearly">سالانه</string>

@@ -8,9 +8,13 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -32,6 +36,11 @@ public class DrawingView extends View {
     private static class Stroke {
         final Path path = new Path();
         final Paint paint = new Paint();
+        /** Flattened x,y pairs touched by this stroke (for tap matching). */
+        final List<Float> xs = new ArrayList<>();
+        final List<Float> ys = new ArrayList<>();
+        /** Milliseconds since the lecture recording started, or -1 when idle. */
+        long timeMs = -1L;
     }
 
     public interface StrokesChangedListener {
@@ -48,6 +57,9 @@ public class DrawingView extends View {
     private int currentColor = 0xFF1F2937;
     private float currentWidth = 12f;
     private boolean eraseMode = false;
+
+    /** SystemClock.elapsedRealtime() captured when lecture recording started, or -1. */
+    private long recordingBase = -1L;
 
     private Stroke active;
     private float lastX, lastY, prevMidX, prevMidY;
@@ -101,6 +113,16 @@ public class DrawingView extends View {
 
     public boolean isEmpty() {
         return baseBitmap == null && strokes.isEmpty();
+    }
+
+    /** Call when lecture recording starts; every new stroke is then timestamped. */
+    public void startTiming(long baseElapsedRealtime) {
+        this.recordingBase = baseElapsedRealtime;
+    }
+
+    /** Call when lecture recording stops; new strokes are no longer timestamped. */
+    public void stopTiming() {
+        this.recordingBase = -1L;
     }
 
     // -------------------------------------------------------------- painting
@@ -236,6 +258,46 @@ public class DrawingView extends View {
         }
     }
 
+    /**
+     * Writes every stroke (color, width, timestamp, sampled points) as JSON so
+     * playback can jump to the audio moment of a tapped stroke.
+     */
+    public boolean exportTimings(File file, long audioDurationMs) {
+        try {
+            JSONArray arr = new JSONArray();
+            for (Stroke s : strokes) {
+                if (s.timeMs < 0 || s.xs.isEmpty()) {
+                    continue;
+                }
+                JSONObject o = new JSONObject();
+                o.put("c", s.paint.getColor());
+                o.put("w", s.paint.getStrokeWidth());
+                o.put("e", s.paint.getXfermode() != null ? 1 : 0);
+                o.put("t", s.timeMs);
+                JSONArray pts = new JSONArray();
+                for (int i = 0; i < s.xs.size(); i++) {
+                    pts.put(Math.round(s.xs.get(i)));
+                    pts.put(Math.round(s.ys.get(i)));
+                }
+                o.put("p", pts);
+                arr.put(o);
+            }
+            JSONObject root = new JSONObject();
+            root.put("canvasW", bufferBitmap == null ? 0 : bufferBitmap.getWidth());
+            root.put("canvasH", bufferBitmap == null ? 0 : bufferBitmap.getHeight());
+            root.put("durationMs", audioDurationMs);
+            root.put("strokes", arr);
+
+            FileOutputStream fos = new FileOutputStream(file);
+            fos.write(root.toString().getBytes("UTF-8"));
+            fos.flush();
+            fos.close();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     // ---------------------------------------------------------------- touch
 
     private Stroke newStroke() {
@@ -296,6 +358,11 @@ public class DrawingView extends View {
 
     private void beginStroke(float x, float y) {
         active = newStroke();
+        active.timeMs = recordingBase >= 0
+                ? SystemClock.elapsedRealtime() - recordingBase
+                : -1L;
+        active.xs.add(x);
+        active.ys.add(y);
         active.path.moveTo(x, y);
         active.path.lineTo(x + 0.01f, y + 0.01f); // visible dot on tap
         if (bufferCanvas != null) {
@@ -327,6 +394,8 @@ public class DrawingView extends View {
 
         // ...and remember it in the stroke path for undo/redo re-rendering
         active.path.quadTo(lastX, lastY, midX, midY);
+        active.xs.add(x);
+        active.ys.add(y);
 
         prevMidX = midX;
         prevMidY = midY;

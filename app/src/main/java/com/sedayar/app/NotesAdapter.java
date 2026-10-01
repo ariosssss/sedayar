@@ -65,7 +65,11 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NoteVH> {
         holder.b.tvTitle.setText(title);
 
         String content = note.content == null ? "" : note.content.replace('\n', ' ').trim();
-        if (content.isEmpty()) {
+        if (note.isLecture()) {
+            holder.b.tvSnippet.setVisibility(View.VISIBLE);
+            holder.b.tvSnippet.setText(holder.b.getRoot().getResources()
+                    .getString(R.string.lecture_badge));
+        } else if (content.isEmpty()) {
             holder.b.tvSnippet.setVisibility(View.GONE);
         } else {
             holder.b.tvSnippet.setVisibility(View.VISIBLE);
