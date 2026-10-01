@@ -14,6 +14,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
@@ -84,6 +85,90 @@ public class AudioFragment extends Fragment {
         binding.btnSummary.setOnClickListener(v -> summarize());
         binding.btnExport.setOnClickListener(v -> showExportSheet());
         binding.btnSaveNote.setOnClickListener(v -> saveAsNote());
+
+        binding.btnModelDownload.setOnClickListener(v -> downloadModel());
+        binding.btnModelDelete.setOnClickListener(v -> confirmDeleteModel());
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        refreshModelCard();
+    }
+
+    // ---------------------------------------------------- offline model card
+
+    private void refreshModelCard() {
+        if (binding == null || !isAdded()) {
+            return;
+        }
+        boolean ready = AppPrefs.voskModelReady(requireContext());
+        binding.tvModelStatus.setText(ready
+                ? R.string.vosk_status_ready : R.string.vosk_status_missing);
+        binding.tvModelStatus.setTextColor(ContextCompat.getColor(requireContext(),
+                ready ? R.color.success : R.color.danger));
+        boolean dirExists = VoskTranscriber.modelDir(requireContext()).exists();
+        binding.btnModelDelete.setVisibility(dirExists || ready
+                ? View.VISIBLE : View.GONE);
+        binding.btnModelDownload.setEnabled(!VoskTranscriber.isDownloading(requireContext()));
+    }
+
+    private void downloadModel() {
+        if (VoskTranscriber.isDownloading(requireContext())) {
+            return;
+        }
+        binding.btnModelDownload.setEnabled(false);
+        binding.progressModel.setVisibility(View.VISIBLE);
+        binding.progressModel.setIndeterminate(false);
+        binding.progressModel.setProgress(0);
+        binding.tvModelStatus.setText(getString(R.string.vosk_downloading, 0));
+        VoskTranscriber.startModelDownload(requireContext(),
+                new VoskTranscriber.ModelDownloadListener() {
+                    @Override
+                    public void onProgress(int percent) {
+                        if (binding == null || !isAdded()) {
+                            return;
+                        }
+                        binding.progressModel.setProgress(percent);
+                        binding.tvModelStatus.setText(
+                                getString(R.string.vosk_downloading, percent));
+                    }
+
+                    @Override
+                    public void onSuccess(File modelDir) {
+                        if (binding == null || !isAdded()) {
+                            return;
+                        }
+                        binding.progressModel.setVisibility(View.GONE);
+                        Toast.makeText(requireContext(), R.string.vosk_install_done,
+                                Toast.LENGTH_SHORT).show();
+                        refreshModelCard();
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        if (binding == null || !isAdded()) {
+                            return;
+                        }
+                        binding.progressModel.setVisibility(View.GONE);
+                        Toast.makeText(requireContext(),
+                                getString(R.string.vosk_download_failed) + " ("
+                                        + message + ")", Toast.LENGTH_LONG).show();
+                        refreshModelCard();
+                    }
+                });
+    }
+
+    private void confirmDeleteModel() {
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.vosk_delete)
+                .setMessage(R.string.vosk_size_hint)
+                .setPositiveButton(R.string.vosk_delete, (d, w) -> {
+                    VoskTranscriber.deleteModel(requireContext());
+                    refreshModelCard();
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
     }
 
     // -------------------------------------------------------------- picking
@@ -289,8 +374,8 @@ public class AudioFragment extends Fragment {
         binding.tvPartial.setVisibility(View.GONE);
 
         if (result == null || result.isEmpty()) {
-            Toast.makeText(requireContext(), R.string.transcription_failed,
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), R.string.audio_empty_result,
+                    Toast.LENGTH_LONG).show();
             return;
         }
         transcript = result;

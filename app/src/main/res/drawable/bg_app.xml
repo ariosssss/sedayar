@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Warm cream background with a very faint Persian girih pattern -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/paper" />
+    <item>
+        <bitmap
+            android:src="@drawable/pattern_faint"
+            android:tileMode="repeat" />
+    </item>
+</layer-list>

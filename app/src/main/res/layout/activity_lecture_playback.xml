@@ -3,14 +3,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/paper"
+    android:background="@drawable/bg_app"
     android:orientation="vertical">
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/paper"
+        android:background="@android:color/transparent"
         app:titleTextColor="@color/text_primary" />
 
     <FrameLayout
@@ -18,14 +18,12 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <ImageView
-            android:id="@+id/iv_page"
+        <com.sedayar.app.view.ReplayView
+            android:id="@+id/replay_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:adjustViewBounds="true"
-            android:contentDescription="@string/cd_thumbnail"
-            android:scaleType="fitCenter"
-            android:src="@color/surface" />
+            android:background="@color/surface"
+            android:contentDescription="@string/cd_thumbnail" />
 
         <TextView
             android:id="@+id/tv_hint"
@@ -33,13 +31,13 @@
             android:layout_height="wrap_content"
             android:layout_gravity="top|center_horizontal"
             android:layout_marginTop="10dp"
-            android:alpha="0.85"
+            android:alpha="0.9"
             android:background="@drawable/bg_live_chip"
             android:paddingStart="14dp"
             android:paddingEnd="14dp"
             android:paddingTop="6dp"
             android:paddingBottom="6dp"
-            android:text="@string/lecture_play_hint"
+            android:text="@string/lecture_replay_hint"
             android:textColor="@color/text_secondary"
             android:textSize="12sp" />
     </FrameLayout>

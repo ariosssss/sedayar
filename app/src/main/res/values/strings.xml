@@ -52,6 +52,7 @@
     <!-- Handwriting / lecture mode -->
     <string name="rec_start">Record class</string>
     <string name="rec_stop">Finish</string>
+    <string name="rec_continue">Recording keeps going — even with the screen off — until you close this page or save</string>
     <string name="rec_hint">While recording, everything you write is linked to the audio</string>
     <string name="rec_rationale">Microphone permission is needed to record the class</string>
     <string name="lecture_saved">Lecture saved — open it from your notes</string>
@@ -107,6 +108,8 @@
     <string name="vosk_delete">Delete model</string>
     <string name="vosk_downloading">Downloading… %d%%</string>
     <string name="vosk_size_hint">Persian model ≈ 53 MB, downloaded once — works without a VPN</string>
+    <string name="vosk_install_done">Persian model installed — offline transcription is ready</string>
+    <string name="vosk_download_failed">Model download failed</string>
     <string name="section_api">Whisper API</string>
     <string name="use_api">Use API engine instead of offline</string>
     <string name="api_endpoint_label">API endpoint</string>
@@ -181,4 +184,24 @@
     <string name="soon_title">Payments coming soon!</string>
     <string name="soon_msg">A payment gateway will be connected to this screen very soon. Stay tuned!</string>
     <string name="dev_unlock_toast">Test mode: subscription state changed</string>
+
+    <!-- Welcome (first launch) -->
+    <string name="welcome_tagline">Your class audio companion</string>
+    <string name="welcome_greeting">Hello and welcome!</string>
+    <string name="welcome_body">Sedayar is your audio classmate: it transcribes the lecture, links every stroke you write to that exact moment of audio, and turns audio files into text and summaries.</string>
+    <string name="welcome_feat_live">Live dictation</string>
+    <string name="welcome_feat_live_desc">Speak and see text instantly</string>
+    <string name="welcome_feat_class">Class mode</string>
+    <string name="welcome_feat_class_desc">Audio and handwriting stay in sync</string>
+    <string name="welcome_feat_file">Audio file to text</string>
+    <string name="welcome_feat_file_desc">Get transcript, summary and subtitles</string>
+    <string name="welcome_start">Start Sedayar</string>
+
+    <!-- Audio tab: offline engine card -->
+    <string name="model_card_title">Offline engine (Vosk)</string>
+    <string name="model_card_info">File transcription runs on your phone with the Persian Vosk model — no internet, no VPN needed. For higher accuracy you can pick the “Whisper API” engine with a key.</string>
+    <string name="audio_empty_result">No speech was recognized. The offline model is built for clear, close-range speech; if the recording is distant or low quality, use the “Whisper API” engine with a key — its Persian accuracy is far higher.</string>
+
+    <!-- Lecture playback: progressive replay -->
+    <string name="lecture_replay_hint">While playing, your writing appears at the exact moment it was written; tap any stroke to hear that moment</string>
 </resources>

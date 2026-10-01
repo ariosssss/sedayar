@@ -7,16 +7,17 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.sedayar.app.audio.Transcript;
 import com.sedayar.app.data.Note;
 import com.sedayar.app.databinding.ActivityLecturePlaybackBinding;
+import com.sedayar.app.view.ReplayView;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -24,12 +25,12 @@ import org.json.JSONObject;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 /**
- * Lecture playback: shows the handwritten page while the class audio plays.
- * Tapping any stroke seeks the audio to the exact moment it was written —
- * so tapping a formula plays the professor explaining that formula.
+ * Lecture playback: replays the handwritten page in sync with the class
+ * audio — every stroke appears at the exact moment it was written, so a
+ * note jotted at minute 30 shows up at minute 30. Tapping any stroke seeks
+ * the audio to the moment it was written (tap-to-seek).
  */
 public class LecturePlaybackActivity extends AppCompatActivity {
 
@@ -37,12 +38,6 @@ public class LecturePlaybackActivity extends AppCompatActivity {
     private MediaPlayer player;
     private final Handler tick = new Handler(Looper.getMainLooper());
 
-    private static class StrokePoint {
-        float x, y;
-        long t;
-    }
-
-    private final List<StrokePoint> points = new ArrayList<>();
     private long durationMs = 0;
     private boolean prepared = false;
     private boolean dragging = false;
@@ -54,8 +49,9 @@ public class LecturePlaybackActivity extends AppCompatActivity {
                 int pos = player.getCurrentPosition();
                 binding.seek.setProgress(pos);
                 binding.tvTime.setText(Transcript.shortTime(pos));
+                binding.replayView.setPlayheadMs(pos);
             }
-            tick.postDelayed(this, 500);
+            tick.postDelayed(this, 400);
         }
     };
 
@@ -92,19 +88,33 @@ public class LecturePlaybackActivity extends AppCompatActivity {
             getSupportActionBar().setTitle(note.title);
         }
 
-        // ---- page image
+        // ---- page image (only needed when there is no stroke timing data)
         Bitmap page = null;
-        if (note.hasDrawing() && new File(note.drawingPath).exists()) {
+        boolean hasStrokes = loadTimings(note);
+        if (!hasStrokes && note.hasDrawing() && new File(note.drawingPath).exists()) {
             BitmapFactory.Options opts = new BitmapFactory.Options();
             opts.inSampleSize = sampleFor(note.drawingPath, 1600);
             page = BitmapFactory.decodeFile(note.drawingPath, opts);
         }
-        if (page != null) {
-            binding.ivPage.setImageBitmap(page);
-        }
+        binding.replayView.setContent(page, parsedStrokes,
+                parsedCanvasW > 0 ? parsedCanvasW : 1080,
+                parsedCanvasH > 0 ? parsedCanvasH : 1920);
+        parsedStrokes.clear(); // ownership transferred to the view
 
-        // ---- stroke timing data
-        loadTimings(note);
+        binding.replayView.setOnStrokeTapListener(timeMs -> {
+            if (!prepared) {
+                return;
+            }
+            player.seekTo((int) timeMs);
+            if (!player.isPlaying()) {
+                player.start();
+                binding.btnPlay.setIconResource(R.drawable.ic_pause);
+                binding.btnPlay.setContentDescription(getString(R.string.cd_pause));
+            }
+            binding.seek.setProgress((int) timeMs);
+            binding.tvTime.setText(Transcript.shortTime(timeMs));
+            binding.replayView.setPlayheadMs(timeMs);
+        });
 
         // ---- audio
         if (note.hasAudio() && new File(note.audioPath).exists()) {
@@ -132,6 +142,7 @@ public class LecturePlaybackActivity extends AppCompatActivity {
                 binding.btnPlay.setContentDescription(getString(R.string.cd_play));
                 binding.seek.setProgress(0);
                 binding.tvTime.setText(Transcript.shortTime(0));
+                binding.replayView.setPlayheadMs(0);
             });
             player.prepareAsync();
         } catch (Exception e) {
@@ -172,16 +183,23 @@ public class LecturePlaybackActivity extends AppCompatActivity {
                 dragging = false;
                 if (prepared) {
                     player.seekTo(bar.getProgress());
+                    binding.replayView.setPlayheadMs(bar.getProgress());
                 }
             }
         });
     }
 
-    // -------------------------------------------------------- tap-to-seek
+    // -------------------------------------------------------- stroke timing
 
-    private void loadTimings(Note note) {
+    /** Parsed stroke list handed to the ReplayView in bind(). */
+    private final List<ReplayView.RStroke> parsedStrokes = new ArrayList<>();
+    private int parsedCanvasW = 0;
+    private int parsedCanvasH = 0;
+
+    /** Parses the timing JSON; returns true when stroke data was found. */
+    private boolean loadTimings(Note note) {
         if (!note.hasTiming()) {
-            return;
+            return false;
         }
         try {
             byte[] raw = new byte[(int) new File(note.timingPath).length()];
@@ -196,94 +214,36 @@ public class LecturePlaybackActivity extends AppCompatActivity {
             }
             fin.close();
             JSONObject root = new JSONObject(new String(raw, java.nio.charset.StandardCharsets.UTF_8));
-            durationMs = root.optLong("durationMs", 0);
+            parsedCanvasW = root.optInt("canvasW", 0);
+            parsedCanvasH = root.optInt("canvasH", 0);
             JSONArray strokes = root.optJSONArray("strokes");
             if (strokes == null) {
-                return;
+                return false;
             }
             for (int i = 0; i < strokes.length(); i++) {
                 JSONObject s = strokes.getJSONObject(i);
                 long t = s.optLong("t", -1);
                 JSONArray pts = s.optJSONArray("p");
-                if (t < 0 || pts == null) {
+                if (t < 0 || pts == null || pts.length() < 2) {
                     continue;
                 }
-                for (int p = 0; p + 1 < pts.length(); p += 2) {
-                    StrokePoint sp = new StrokePoint();
-                    sp.x = pts.getInt(p);
-                    sp.y = pts.getInt(p + 1);
-                    sp.t = t;
-                    points.add(sp);
+                int count = pts.length() / 2;
+                float[] xs = new float[count];
+                float[] ys = new float[count];
+                for (int p = 0; p < count; p++) {
+                    xs[p] = pts.getInt(p * 2);
+                    ys[p] = pts.getInt(p * 2 + 1);
                 }
+                parsedStrokes.add(ReplayView.buildStroke(
+                        s.optInt("c", 0xFF1F2937),
+                        (float) s.optDouble("w", 7f),
+                        s.optInt("e", 0) == 1,
+                        t, xs, ys));
             }
+            return !parsedStrokes.isEmpty();
         } catch (Exception ignored) {
+            return false;
         }
-
-        binding.ivPage.setOnClickListener(v -> {
-            if (points.isEmpty() || !prepared) {
-                return;
-            }
-            ImageView iv = binding.ivPage;
-            // Use the last touch location captured by OnTouchListener below
-            float[] bmp = lastTouchToBitmap(iv, lastTouch[0], lastTouch[1]);
-            if (bmp == null) {
-                return;
-            }
-            StrokePoint best = nearest(bmp[0], bmp[1], dp(30));
-            if (best != null) {
-                player.seekTo((int) best.t);
-                if (!player.isPlaying()) {
-                    player.start();
-                    binding.btnPlay.setIconResource(R.drawable.ic_pause);
-                    binding.btnPlay.setContentDescription(getString(R.string.cd_pause));
-                }
-                binding.seek.setProgress((int) best.t);
-                binding.tvTime.setText(Transcript.shortTime(best.t));
-                binding.tvHint.setText(Transcript.shortTime(best.t));
-            }
-        });
-
-        binding.ivPage.setOnTouchListener((v, event) -> {
-            lastTouch[0] = event.getX();
-            lastTouch[1] = event.getY();
-            return false; // let the click listener fire after we record the point
-        });
-    }
-
-    private final float[] lastTouch = new float[2];
-
-    /** Converts a touch point in view coords to bitmap coords (fitCenter). */
-    private float[] lastTouchToBitmap(ImageView iv, float vx, float vy) {
-        Bitmap bmp = iv.getDrawable() instanceof android.graphics.drawable.BitmapDrawable
-                ? ((android.graphics.drawable.BitmapDrawable) iv.getDrawable()).getBitmap()
-                : null;
-        if (bmp == null) {
-            return null;
-        }
-        float vw = iv.getWidth();
-        float vh = iv.getHeight();
-        float scale = Math.min(vw / bmp.getWidth(), vh / bmp.getHeight());
-        float dx = (vw - bmp.getWidth() * scale) / 2f;
-        float dy = (vh - bmp.getHeight() * scale) / 2f;
-        float bx = (vx - dx) / scale;
-        float by = (vy - dy) / scale;
-        if (bx < 0 || by < 0 || bx > bmp.getWidth() || by > bmp.getHeight()) {
-            return null;
-        }
-        return new float[]{bx, by};
-    }
-
-    private StrokePoint nearest(float x, float y, float maxDistPx) {
-        StrokePoint best = null;
-        double bestD = maxDistPx * maxDistPx;
-        for (StrokePoint p : points) {
-            double d = (p.x - x) * (p.x - x) + (p.y - y) * (p.y - y);
-            if (d <= bestD) {
-                bestD = d;
-                best = p;
-            }
-        }
-        return best;
     }
 
     // ------------------------------------------------------------- lifecycle
@@ -319,9 +279,5 @@ public class LecturePlaybackActivity extends AppCompatActivity {
             sample *= 2;
         }
         return sample;
-    }
-
-    private int dp(int v) {
-        return (int) (v * getResources().getDisplayMetrics().density);
     }
 }

@@ -70,12 +70,10 @@
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/iv_thumb"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="170dp"
             android:layout_marginTop="8dp"
-            android:adjustViewBounds="true"
             android:contentDescription="@string/cd_thumbnail"
-            android:maxHeight="220dp"
-            android:scaleType="fitCenter"
+            android:scaleType="centerCrop"
             android:visibility="gone"
             app:shapeAppearanceOverlay="@style/ShapeAppearance.Sedayar.Thumb" />
     </LinearLayout>

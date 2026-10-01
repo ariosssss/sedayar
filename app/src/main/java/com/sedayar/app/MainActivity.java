@@ -18,6 +18,7 @@ import com.sedayar.app.fragment.AudioFragment;
 import com.sedayar.app.fragment.HandwritingFragment;
 import com.sedayar.app.fragment.LiveVoiceFragment;
 import com.sedayar.app.fragment.NotesFragment;
+import com.sedayar.app.util.AppPrefs;
 
 /**
  * App shell: toolbar + bottom navigation with four sections
@@ -35,6 +36,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        // First launch: greet the user on the Persian-patterned welcome screen
+        if (!AppPrefs.isWelcomed(this)) {
+            startActivity(new Intent(this, WelcomeActivity.class));
+        }
 
         setSupportActionBar(binding.toolbar);
 

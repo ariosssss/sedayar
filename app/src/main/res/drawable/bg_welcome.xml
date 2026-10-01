@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Deep lapis night sky with a golden Persian girih pattern (welcome screen) -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/lapis" />
+    <item>
+        <bitmap
+            android:src="@drawable/pattern_lapis"
+            android:tileMode="repeat" />
+    </item>
+</layer-list>

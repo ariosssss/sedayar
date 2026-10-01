@@ -52,6 +52,7 @@
     <!-- Handwriting / lecture mode -->
     <string name="rec_start">ضبط کلاس</string>
     <string name="rec_stop">پایان ضبط</string>
+    <string name="rec_continue">ضبط ادامه دارد؛ حتی با خاموش‌شدن صفحه — تا وقتی این صفحه را ببندی یا ذخیره کنی</string>
     <string name="rec_hint">هنگام ضبط، هرچه می‌نویسی به صدا متصل می‌شود</string>
     <string name="rec_rationale">برای ضبط کلاس به اجازهٔ میکروفون نیاز است</string>
     <string name="lecture_saved">کلاس ذخیره شد — از بخش یادداشت‌ها بازش کن</string>
@@ -107,6 +108,8 @@
     <string name="vosk_delete">حذف مدل</string>
     <string name="vosk_downloading">در حال دانلود… ٪d٪</string>
     <string name="vosk_size_hint">مدل فارسی حدود ۵۳ مگابایت است، یک‌بار دانلود می‌شود و بدون فیلترشکن کار می‌کند</string>
+    <string name="vosk_install_done">مدل فارسی نصب شد؛ حالا آفلاین پیاده می‌کند</string>
+    <string name="vosk_download_failed">دانلود مدل ناموفق بود</string>
     <string name="section_api">Whisper API</string>
     <string name="use_api">به‌جای آفلاین از API استفاده کن</string>
     <string name="api_endpoint_label">آدرس API</string>
@@ -181,4 +184,24 @@
     <string name="soon_title">پرداخت به‌زودی!</string>
     <string name="soon_msg">درگاه پرداخت به‌زودی به این بخش وصل می‌شود. صبور باش، داریم روش کار می‌کنیم!</string>
     <string name="dev_unlock_toast">حالت تست: وضعیت اشتراک عوض شد</string>
+
+    <!-- Welcome (first launch) -->
+    <string name="welcome_tagline">همراه صوتیِ کلاس‌هایت</string>
+    <string name="welcome_greeting">سلام! خوش آمدی</string>
+    <string name="welcome_body">صدایار هم‌کلاسیِ صوتی توست: حرف‌های استاد را پیاده می‌کند، نوشته‌هایت را به صدای همان لحظه وصل می‌کند و از فایل صوتی، متن و خلاصه می‌سازد.</string>
+    <string name="welcome_feat_live">پیادهٔ زندهٔ گفتار</string>
+    <string name="welcome_feat_live_desc">حرف بزن تا همان لحظه متن شود</string>
+    <string name="welcome_feat_class">حالت کلاس</string>
+    <string name="welcome_feat_class_desc">صدا و نوشته‌ات هم‌گام ضبط می‌شوند</string>
+    <string name="welcome_feat_file">فایل صوتی به متن</string>
+    <string name="welcome_feat_file_desc">متن، خلاصه و زیرنویس بگیر</string>
+    <string name="welcome_start">شروع صدایار</string>
+
+    <!-- Audio tab: offline engine card -->
+    <string name="model_card_title">موتور آفلاین (Vosk)</string>
+    <string name="model_card_info">تبدیل فایل به متن با مدل فارسیِ Vosk روی خود گوشی انجام می‌شود؛ بدون اینترنت و فیلترشکن. برای دقت بالاتر می‌توانی موتور «Whisper API» را با کلید انتخاب کنی.</string>
+    <string name="audio_empty_result">هیچ کلامی شناسایی نشد. مدل آفلاین برای صدای واضح و نزدیک ساخته شده؛ اگر صدا از دور ضبط شده یا کیفیت فایل پایین است، از موتور «Whisper API» با کلید استفاده کن — دقتش برای فارسی بسیار بالاتر است.</string>
+
+    <!-- Lecture playback: progressive replay -->
+    <string name="lecture_replay_hint">با پخش، نوشته‌هایت در همان لحظهٔ نوشته‌شدن ظاهر می‌شوند؛ روی هر خط بزن تا صدای همان لحظه پخش شود</string>
 </resources>

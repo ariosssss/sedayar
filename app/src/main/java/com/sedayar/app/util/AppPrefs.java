@@ -14,6 +14,7 @@ public final class AppPrefs {
     private static final String PREFS = "sedayar_prefs";
     private static final String KEY_SPEECH_LANG = "speech_lang";
     private static final String KEY_OFFLINE = "offline_speech";
+    private static final String KEY_WELCOMED = "welcomed";
 
     private static final String KEY_USE_API = "audio_use_api";
     private static final String KEY_API_ENDPOINT = "audio_api_endpoint";
@@ -38,6 +39,16 @@ public final class AppPrefs {
 
     private static SharedPreferences prefs(Context c) {
         return c.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+    }
+
+    // ------------------------------------------------------------ first run
+
+    public static boolean isWelcomed(Context c) {
+        return prefs(c).getBoolean(KEY_WELCOMED, false);
+    }
+
+    public static void setWelcomed(Context c) {
+        prefs(c).edit().putBoolean(KEY_WELCOMED, true).apply();
     }
 
     // ------------------------------------------------------------- speech

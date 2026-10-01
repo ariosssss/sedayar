@@ -4,7 +4,7 @@
     android:id="@+id/coordinator"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/paper">
+    android:background="@drawable/bg_app">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -15,7 +15,7 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/paper"
+            android:background="@drawable/bg_app"
             app:titleTextColor="@color/text_primary" />
 
         <com.google.android.material.button.MaterialButtonToggleGroup
@@ -250,7 +250,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/paper"
+            android:background="@drawable/bg_app"
             android:elevation="8dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"

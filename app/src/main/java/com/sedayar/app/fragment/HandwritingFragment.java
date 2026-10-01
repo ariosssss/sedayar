@@ -228,11 +228,11 @@ public class HandwritingFragment extends Fragment {
 
     // ------------------------------------------------------------------ save
 
-    private void save() {
-        boolean hasDrawing = !binding.drawingView.isEmpty();
+    /** Builds the lecture note (stops the recorder). Null when nothing to save. */
+    private Note buildNote() {
+        boolean hasDrawing = binding != null && !binding.drawingView.isEmpty();
         if (!hasDrawing && !recording) {
-            Toast.makeText(requireContext(), R.string.canvas_empty, Toast.LENGTH_SHORT).show();
-            return;
+            return null;
         }
         long audioDuration = stopRecording();
 
@@ -262,15 +262,34 @@ public class HandwritingFragment extends Fragment {
         } catch (Exception e) {
             Log.e(TAG, "save failed", e);
         }
+        return note;
+    }
 
+    private void save() {
+        Note note = buildNote();
+        if (note == null) {
+            Toast.makeText(requireContext(), R.string.canvas_empty, Toast.LENGTH_SHORT).show();
+            return;
+        }
         SedayarApp.get().repository().save(note, id -> {
-            if (!isAdded()) {
+            if (!isAdded() || binding == null) {
                 return;
             }
             binding.drawingView.clearAll();
             Snackbar.make(binding.getRoot(), R.string.lecture_saved,
                     Snackbar.LENGTH_LONG).show();
         });
+    }
+
+    /** Saves silently when the view is being destroyed mid-recording. */
+    private void autoSaveOnExit() {
+        if (binding == null) {
+            return;
+        }
+        Note note = buildNote();
+        if (note != null) {
+            SedayarApp.get().repository().save(note, id -> { });
+        }
     }
 
     // -------------------------------------------------------------- painting
@@ -318,9 +337,10 @@ public class HandwritingFragment extends Fragment {
     public void onPause() {
         super.onPause();
         if (recording) {
-            // leaving the tab mid-recording: stop audio, keep the drawing
-            stopRecording();
-            Toast.makeText(requireContext(), R.string.rec_stop, Toast.LENGTH_SHORT).show();
+            // Keep recording through tab switches / screen lock — a class does
+            // not stop when the screen turns off. The note is auto-saved when
+            // the view is finally destroyed.
+            Toast.makeText(requireContext(), R.string.rec_continue, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -328,6 +348,9 @@ public class HandwritingFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         recTimer.removeCallbacks(recTick);
+        // Leaving this tab mid-lecture: stop audio and persist everything
+        // (drawing + audio + stroke timings) so nothing is lost.
+        autoSaveOnExit();
         if (recorder != null) {
             try {
                 recorder.stop();
@@ -339,6 +362,7 @@ public class HandwritingFragment extends Fragment {
             }
             recorder = null;
         }
+        recording = false;
         binding = null;
     }
 

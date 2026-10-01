@@ -266,14 +266,16 @@ public class DrawingView extends View {
         try {
             JSONArray arr = new JSONArray();
             for (Stroke s : strokes) {
-                if (s.timeMs < 0 || s.xs.isEmpty()) {
+                if (s.xs.isEmpty()) {
                     continue;
                 }
                 JSONObject o = new JSONObject();
                 o.put("c", s.paint.getColor());
                 o.put("w", s.paint.getStrokeWidth());
                 o.put("e", s.paint.getXfermode() != null ? 1 : 0);
-                o.put("t", s.timeMs);
+                // Strokes written while no recording was active (or after it
+                // stopped) belong to the end of the audio timeline.
+                o.put("t", s.timeMs < 0 ? Math.max(0, audioDurationMs) : s.timeMs);
                 JSONArray pts = new JSONArray();
                 for (int i = 0; i < s.xs.size(); i++) {
                     pts.put(Math.round(s.xs.get(i)));
