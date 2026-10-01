@@ -167,7 +167,7 @@ public class NoteEditorActivity extends AppCompatActivity {
         binding.btnErase.setOnClickListener(v -> {
             boolean on = !binding.drawingView.isEraseMode();
             binding.drawingView.setEraseMode(on);
-            binding.btnErase.setIconTintList(ColorStateList.valueOf(
+            binding.btnErase.setIconTint(ColorStateList.valueOf(
                     ContextCompat.getColor(this, on ? R.color.primary : R.color.text_secondary)));
         });
         binding.btnUndo.setOnClickListener(v -> binding.drawingView.undo());
@@ -182,7 +182,7 @@ public class NoteEditorActivity extends AppCompatActivity {
                     i == selected ? R.color.primary : R.color.stroke));
         }
         binding.drawingView.setEraseMode(false);
-        binding.btnErase.setIconTintList(ColorStateList.valueOf(
+        binding.btnErase.setIconTint(ColorStateList.valueOf(
                 ContextCompat.getColor(this, R.color.text_secondary)));
     }
 
