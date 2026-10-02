@@ -23,7 +23,8 @@ import com.sedayar.app.util.InsetsUtil;
 
 /**
  * App shell: lapis toolbar with golden title + bottom navigation with four
- * sections (Notes / Live voice / Handwriting / Audio file) + a settings action.
+ * sections (Notes / Live voice / Handwriting / Audio file) + a three-lines
+ * menu button (تنظیمات / درباره) in the corner.
  */
 public class MainActivity extends AppCompatActivity {
 
@@ -143,6 +144,10 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
         if (id == R.id.action_settings) {
             startActivity(new Intent(this, SettingsActivity.class));
+            return true;
+        }
+        if (id == R.id.action_about) {
+            startActivity(new Intent(this, AboutActivity.class));
             return true;
         }
         if (id == R.id.action_premium) {

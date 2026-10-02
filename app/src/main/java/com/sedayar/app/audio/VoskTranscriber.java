@@ -17,8 +17,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -59,7 +57,45 @@ public final class VoskTranscriber {
     private static final long DOWNLOAD_ID_KEY = 47421L;
     private static final String DOWNLOAD_PREF = "vosk_download_id";
 
+    /** The published zip is ~50 MB; anything smaller is a partial download. */
+    private static final long MIN_ZIP_BYTES = 40L * 1024 * 1024;
+
     private VoskTranscriber() {
+    }
+
+    // ---------------------------------------------------------- validation
+
+    /**
+     * True when the directory really contains a usable Vosk model. Guards
+     * against the native library aborting the whole process on a corrupt or
+     * half-copied folder — the #1 hard-crash source of the file tab.
+     */
+    public static boolean isModelDirValid(File dir) {
+        if (dir == null || !dir.isDirectory()) {
+            return false;
+        }
+        File am = new File(dir, "am");
+        File graph = new File(dir, "graph");
+        boolean amOk = (new File(am, "final.mdl").isFile()
+                || new File(am, "final.am").isFile());
+        boolean graphOk = new File(graph, "HCLG.fst").isFile()
+                || new File(graph, "HCLr.fst").isFile()
+                || new File(graph, "HCLr_unweighted.fst").isFile();
+        boolean confOk = new File(dir, "conf" + File.separator + "model.conf").isFile()
+                || new File(dir, "conf" + File.separator + "mfcc.conf").isFile();
+        return amOk && graphOk && confOk;
+    }
+
+    /** Zip magic + minimum size check — a partial download must never install. */
+    private static boolean isPlausibleZip(File zip) {
+        if (!zip.isFile() || zip.length() < MIN_ZIP_BYTES) {
+            return false;
+        }
+        try (InputStream in = new FileInputStream(zip)) {
+            return in.read() == 'P' && in.read() == 'K';
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     // ------------------------------------------------------- model download
@@ -98,10 +134,21 @@ public final class VoskTranscriber {
     public static void startModelDownload(Context context, ModelDownloadListener listener) {
         File zip = modelZipFile(context);
         if (zip.exists()) {
-            // Resume from a completed-but-not-installed download
-            tryInstallFromZip(context, listener);
+            if (isPlausibleZip(zip)) {
+                // Resume from a completed-but-not-installed download
+                tryInstallFromZip(context, listener);
+            } else {
+                // A partial/interrupted download: drop it and start over
+                zip.delete();
+                enqueueDownload(context, listener);
+            }
             return;
         }
+        enqueueDownload(context, listener);
+    }
+
+    private static void enqueueDownload(Context context, ModelDownloadListener listener) {
+        File zip = modelZipFile(context);
         DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
         if (dm == null) {
             listener.onError("DownloadManager unavailable");
@@ -181,6 +228,12 @@ public final class VoskTranscriber {
                     copyRecursive(inner, dest);
                     deleteRecursive(tmp);
                 }
+                if (!isModelDirValid(dest)) {
+                    // corrupt archive — never hand this to the native engine
+                    deleteRecursive(dest);
+                    zip.delete();
+                    throw new Exception("model_install_invalid");
+                }
                 AppPrefs.setVoskModelDir(context, dest.getAbsolutePath());
                 new Handler(Looper.getMainLooper()).post(
                         () -> listener.onSuccess(dest));
@@ -211,13 +264,33 @@ public final class VoskTranscriber {
             listener.onError("model not ready");
             return;
         }
+        File modelPath = new File(dir);
+        if (!isModelDirValid(modelPath)) {
+            listener.onError("model_corrupt");
+            return;
+        }
         listener.onProgress(0f);
 
-        Model model = new Model(dir);
+        Model model;
+        Recognizer recognizer;
         try {
-            Recognizer recognizer = new Recognizer(model, 16000f);
+            model = new Model(modelPath.getAbsolutePath());
+        } catch (UnsatisfiedLinkError e) {
+            listener.onError("engine_missing");
+            return;
+        } catch (Throwable t) {
+            listener.onError("model_load_failed");
+            return;
+        }
+        try {
+            recognizer = new Recognizer(model, 16000f);
+            try {
+                recognizer.setWords(true);
+            } catch (Throwable ignored) {
+                // older builds: word timings unavailable, plain text still works
+            }
 
-            WordBuffer buffer = new WordBuffer();
+            Segmenter buffer = new Segmenter();
             Transcript transcript = new Transcript();
             transcript.language = "fa";
 
@@ -267,12 +340,19 @@ public final class VoskTranscriber {
         }
     }
 
-    private static void collect(String json, WordBuffer buffer, Transcript transcript,
+    private static void collect(String json, Segmenter buffer, Transcript transcript,
                                 TranscribeListener listener) {
         try {
             JSONObject result = new JSONObject(json);
             JSONArray words = result.optJSONArray("result");
             if (words == null) {
+                String text = result.optString("text", "");
+                if (!text.trim().isEmpty()) {
+                    // no timings available — one segment, engine-level fallback
+                    Transcript.Segment s = new Transcript.Segment(0, 0, text);
+                    transcript.add(0, 0, text);
+                    listener.onSegment(s);
+                }
                 return;
             }
             for (int i = 0; i < words.length(); i++) {
@@ -287,62 +367,11 @@ public final class VoskTranscriber {
     }
 
     /** Groups consecutive words into ~12 s segments for the SRT / HTML timeline. */
-    private static void flushBuffer(WordBuffer buffer, long fallbackEnd,
+    private static void flushBuffer(Segmenter buffer, long fallbackEnd,
                                     Transcript transcript, TranscribeListener listener) {
         for (Transcript.Segment s : buffer.flush(fallbackEnd)) {
             transcript.add(s.startMs, s.endMs, s.text);
             listener.onSegment(s);
-        }
-    }
-
-    /** Accumulates words and splits them into human-sized segments. */
-    private static final class WordBuffer {
-        private final List<long[]> words = new ArrayList<>(); // {start, end}
-        private final List<String> texts = new ArrayList<>();
-
-        void add(long startMs, long endMs, String word) {
-            if (word == null || word.trim().isEmpty()) {
-                return;
-            }
-            words.add(new long[]{startMs, endMs});
-            texts.add(word.trim());
-        }
-
-        List<Transcript.Segment> flush(long fallbackEnd) {
-            List<Transcript.Segment> out = new ArrayList<>();
-            long segStart = -1, segEnd = -1;
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < words.size(); i++) {
-                long[] w = words.get(i);
-                if (segStart < 0) {
-                    segStart = w[0];
-                    sb.setLength(0);
-                }
-                if (sb.length() > 0) {
-                    sb.append(' ');
-                }
-                sb.append(texts.get(i));
-                segEnd = w[1];
-                boolean breakAfter = i == words.size() - 1;
-                if (!breakAfter) {
-                    long[] next = words.get(i + 1);
-                    boolean gap = next[0] - w[1] > 1200;
-                    boolean longSeg = w[1] - segStart > 12_000;
-                    boolean manyWords = i % 40 == 39;
-                    breakAfter = gap || longSeg || manyWords;
-                }
-                if (breakAfter && sb.length() > 0) {
-                    out.add(new Transcript.Segment(segStart, segEnd, sb.toString()));
-                    segStart = -1;
-                }
-            }
-            if (segStart >= 0 && sb.length() > 0) {
-                out.add(new Transcript.Segment(segStart,
-                        Math.max(segEnd, segStart + 500), sb.toString()));
-            }
-            words.clear();
-            texts.clear();
-            return out;
         }
     }
 

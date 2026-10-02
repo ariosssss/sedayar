@@ -102,7 +102,8 @@ public class AudioFragment extends Fragment {
         if (binding == null || !isAdded()) {
             return;
         }
-        boolean ready = AppPrefs.voskModelReady(requireContext());
+        boolean ready = VoskTranscriber.isModelDirValid(
+                VoskTranscriber.modelDir(requireContext()));
         binding.tvModelStatus.setText(ready
                 ? R.string.vosk_status_ready : R.string.vosk_status_missing);
         binding.tvModelStatus.setTextColor(ContextCompat.getColor(requireContext(),
@@ -243,7 +244,8 @@ public class AudioFragment extends Fragment {
                     Toast.LENGTH_LONG).show();
             return;
         }
-        if (!apiEngine && !AppPrefs.voskModelReady(requireContext())) {
+        if (!apiEngine && !VoskTranscriber.isModelDirValid(
+                VoskTranscriber.modelDir(requireContext()))) {
             // the #1 cause of "transcription failed" — guide the user right here
             new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
                     .setTitle(R.string.audio_no_model)
@@ -293,8 +295,8 @@ public class AudioFragment extends Fragment {
                     File out = new File(requireContext().getCacheDir(),
                             "decoded_" + System.currentTimeMillis() + ".wav");
                     try {
-                        wav = AudioDecoder.decodeToWav(requireContext(), Uri.fromFile(input),
-                                out, new AudioDecoder.Progress() {
+                        wav = AudioDecoder.decodeToWav(input, out,
+                                new AudioDecoder.Progress() {
                                     @Override
                                     public void onProgress(float ratio) {
                                         postProgress((int) (ratio * 40), R.string.status_decoding);
@@ -332,13 +334,31 @@ public class AudioFragment extends Fragment {
             } catch (Exception e) {
                 if (!"cancelled".equals(e.getMessage())) {
                     String msg = getString(R.string.transcription_failed) + "\n"
-                            + rootMessage(e);
+                            + friendlyError(e);
                     main.post(() -> Toast.makeText(requireContext(), msg,
                             Toast.LENGTH_LONG).show());
                 }
                 main.post(this::resetUi);
             }
         });
+    }
+
+    /** Translates engine error keys into human sentences, keeps the rest verbatim. */
+    private String friendlyError(Throwable e) {
+        String m = rootMessage(e);
+        if (m == null) {
+            return "?";
+        }
+        switch (m) {
+            case "model_corrupt":
+                return getString(R.string.err_model_corrupt);
+            case "model_load_failed":
+                return getString(R.string.err_model_load);
+            case "engine_missing":
+                return getString(R.string.err_engine_missing);
+            default:
+                return m;
+        }
     }
 
     /** The deepest exception message — MediaCodec errors nest deeply. */

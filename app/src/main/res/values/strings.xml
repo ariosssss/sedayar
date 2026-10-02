@@ -221,6 +221,21 @@
     <string name="live_recording_toast">Recording continuously; pauses between sentences are fine</string>
     <string name="live_text_paused">Audio keeps recording; tap the mic to resume the transcript</string>
 
+    <!-- Live voice v1.4: single-engine (Vosk) rewrite -->
+    <string name="live_engine_note">One-piece recording + offline Persian live text</string>
+    <string name="live_engine_need_model">The Persian model is needed for live text — tap the mic</string>
+    <string name="live_status_preparing">Preparing the engine…</string>
+    <string name="live_no_model_msg">With the Persian model installed, live text is produced while recording (~53 MB, one time, no VPN). Or record audio-only now and transcribe it later from the “Audio file” tab.</string>
+    <string name="live_audio_only">Audio only</string>
+    <string name="live_audio_only_note">Recording audio only; use the “Audio file” tab for text</string>
+    <string name="live_record_failed">Could not open the microphone; another app may be holding it</string>
+    <string name="live_engine_error">Text engine stopped; audio keeps recording</string>
+
+    <!-- Audio tab: engine error keys -->
+    <string name="err_model_corrupt">The downloaded model is incomplete — tap “Delete model” in the engine card and download again</string>
+    <string name="err_model_load">Could not load the model; free some memory and try again</string>
+    <string name="err_engine_missing">The offline engine library failed to initialize on this device</string>
+
     <!-- Audio tab: model missing dialog -->
     <string name="audio_no_model_msg">The offline Persian model is not downloaded yet. Download it now? (~53 MB, one time, no VPN needed)</string>
 
@@ -232,4 +247,30 @@
     <string name="app_lang_title">App language</string>
     <string name="app_lang_fa">Persian (default)</string>
     <string name="app_lang_en">English</string>
+
+    <!-- Top-bar menu (three lines) + about -->
+    <string name="menu">Menu</string>
+    <string name="cd_menu">App menu</string>
+    <string name="about">About</string>
+    <string name="about_title">About Sedayar</string>
+    <string name="about_tagline">Your classes’ audio companion</string>
+    <string name="about_intro">Sedayar is built for students: everything a class produces — audio, handwriting, text and files — in one place, mostly offline on the phone itself.</string>
+    <string name="about_features_title">What Sedayar does</string>
+    <string name="about_f1">Colorful notes</string>
+    <string name="about_f1_desc">Search, pin, share and Jalali dates</string>
+    <string name="about_f2">Live voice typing</string>
+    <string name="about_f2_desc">Instant speech-to-text with a one-piece audio file and [mm:ss] stamps</string>
+    <string name="about_f3">A4 handwriting notebook</string>
+    <string name="about_f3_desc">Page by page, with pens, eraser and typed text</string>
+    <string name="about_f4">Class mode</string>
+    <string name="about_f4_desc">Audio and writing recorded in sync; during playback every stroke appears at its real moment</string>
+    <string name="about_f5">Audio file to text</string>
+    <string name="about_f5_desc">MP3, M4A, WAV and OGG — offline with the Persian model or via a Whisper API</string>
+    <string name="about_f6">Summarizer</string>
+    <string name="about_f6_desc">Offline automatic summary and AI summary of any transcript</string>
+    <string name="about_f7">Export and subtitles</string>
+    <string name="about_f7_desc">TXT, SRT, MD and styled HTML</string>
+    <string name="about_f8">Sedayar Plus</string>
+    <string name="about_f8_desc">The premium tier with the golden crown; payment gateway coming soon</string>
+    <string name="about_footer">Offline, ad-free and made for Iranian classrooms</string>
 </resources>

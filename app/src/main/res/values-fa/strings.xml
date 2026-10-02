@@ -221,6 +221,21 @@
     <string name="live_recording_toast">صدا به‌صورت یکجا ضبط می‌شود؛ سکوت بین جمله‌ها مشکلی ندارد</string>
     <string name="live_text_paused">ضبط صدا ادامه دارد؛ برای ادامهٔ متن دوباره میکروفون را بزن</string>
 
+    <!-- Live voice v1.4: single-engine (Vosk) rewrite -->
+    <string name="live_engine_note">ضبط یکجا + متن زندهٔ آفلاین فارسی</string>
+    <string name="live_engine_need_model">برای متن زندهٔ آفلاین، مدل فارسی لازم است — میکروفون را بزن</string>
+    <string name="live_status_preparing">در حال آماده‌سازی موتور…</string>
+    <string name="live_no_model_msg">با دانلود مدل فارسی، هم‌زمان با ضبط صدا، متن زنده هم ساخته می‌شود (حدود ۵۳ مگابایت، یک‌بار برای همیشه، بدون فیلترشکن). یا همان حالا فقط صدا ضبط کن و بعداً از تب «فایل صوتی» متنش کن.</string>
+    <string name="live_audio_only">فقط صدا</string>
+    <string name="live_audio_only_note">فقط صدا ضبط می‌شود؛ برای متن از تب «فایل صوتی» استفاده کن</string>
+    <string name="live_record_failed">میکروفون باز نشد؛ شاید برنامهٔ دیگری صدا را نگه داشته باشد</string>
+    <string name="live_engine_error">موتور متن از کار افتاد؛ صدا همچنان ضبط می‌شود</string>
+
+    <!-- Audio tab: engine error keys -->
+    <string name="err_model_corrupt">مدل دانلودشده ناقص است؛ در کارت موتور، «حذف مدل» را بزن و دوباره دانلود کن</string>
+    <string name="err_model_load">مدل بارگذاری نشد؛ کمی حافظهٔ گوشی را آزاد کن و دوباره تلاش کن</string>
+    <string name="err_engine_missing">کتابخانهٔ موتور آفلاین روی این گوشی نصب نشد</string>
+
     <!-- Audio tab: model missing dialog -->
     <string name="audio_no_model_msg">مدل فارسیِ آفلاین هنوز دانلود نشده است. همین حالا دانلودش کنم؟ (حدود ۵۳ مگابایت، یک‌بار برای همیشه، بدون فیلترشکن)</string>
 
@@ -232,4 +247,30 @@
     <string name="app_lang_title">زبان برنامه</string>
     <string name="app_lang_fa">فارسی (پیش‌فرض)</string>
     <string name="app_lang_en">English</string>
+
+    <!-- Top-bar menu (three lines) + about -->
+    <string name="menu">منو</string>
+    <string name="cd_menu">منوی برنامه</string>
+    <string name="about">درباره</string>
+    <string name="about_title">دربارهٔ صدایار</string>
+    <string name="about_tagline">همراه صوتیِ کلاس‌هایت</string>
+    <string name="about_intro">صدایار برای دانش‌جویان و اهل درس ساخته شده: هر چیز کلاس — صدا، دست‌خط، متن و فایل — همه در یک‌جا، و بیشترشان آفلاین روی خود گوشی.</string>
+    <string name="about_features_title">ویژگی‌های صدایار</string>
+    <string name="about_f1">یادداشت‌های رنگی</string>
+    <string name="about_f1_desc">با جست‌وجو، پین، اشتراک‌گذاری و تاریخ شمسی</string>
+    <string name="about_f2">تایپ صوتی زنده</string>
+    <string name="about_f2_desc">گفتار به متنِ لحظه‌ای، همراه فایل صوتی یکجا با مُهر زمانی</string>
+    <string name="about_f3">دفتر دست‌نویس A4</string>
+    <string name="about_f3_desc">برگه‌به‌برگه با قلم، پاک‌کن و تایپ دستی</string>
+    <string name="about_f4">حالت کلاس</string>
+    <string name="about_f4_desc">صدا و نوشته‌ات هم‌گام ضبط می‌شوند؛ در پخش، هر نوشته در لحظهٔ واقعی‌اش ظاهر می‌شود</string>
+    <string name="about_f5">فایل صوتی به متن</string>
+    <string name="about_f5_desc">MP3، M4A، WAV و OGG — آفلاین با مدل فارسی یا با Whisper API</string>
+    <string name="about_f6">خلاصه‌ساز</string>
+    <string name="about_f6_desc">خلاصهٔ خودکار آفلاین و خلاصهٔ هوشمند از هر پیاده</string>
+    <string name="about_f7">خروجی و زیرنویس</string>
+    <string name="about_f7_desc">TXT، SRT، MD و HTML استایل‌دار</string>
+    <string name="about_f8">صدایار پلاس</string>
+    <string name="about_f8_desc">نسخهٔ ویژه با تاج طلایی؛ درگاه پرداخت به‌زودی</string>
+    <string name="about_footer">آفلاین، بدون تبلیغ و برای کلاس‌های ایرانی ساخته شد</string>
 </resources>

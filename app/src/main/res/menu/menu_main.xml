@@ -14,10 +14,22 @@
         android:title="@string/premium"
         app:showAsAction="ifRoom" />
 
+    <!-- Three-lines button: opens تنظیمات / درباره -->
     <item
-        android:id="@+id/action_settings"
-        android:icon="@drawable/ic_settings"
-        android:title="@string/settings"
-        android:contentDescription="@string/cd_settings"
-        app:showAsAction="always" />
+        android:id="@+id/action_menu"
+        android:contentDescription="@string/cd_menu"
+        android:icon="@drawable/ic_menu"
+        android:title="@string/menu"
+        app:showAsAction="always">
+        <menu>
+            <item
+                android:id="@+id/action_settings"
+                android:icon="@drawable/ic_settings"
+                android:title="@string/settings" />
+            <item
+                android:id="@+id/action_about"
+                android:icon="@drawable/ic_info"
+                android:title="@string/about" />
+        </menu>
+    </item>
 </menu>

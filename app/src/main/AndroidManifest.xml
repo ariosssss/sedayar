@@ -52,6 +52,10 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
+            android:name=".AboutActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".PremiumActivity"
             android:exported="false" />
 
